@@ -206,7 +206,7 @@ export const Auth = () => {
             </motion.div>
 
             <h1 className="text-7xl font-black text-white tracking-tighter mb-3 drop-shadow-2xl">
-              X8
+              MuxDay
             </h1>
             <p className="text-2xl text-orange-300 font-light tracking-widest">FIND YOUR PEOPLE</p>
 
@@ -223,7 +223,7 @@ export const Auth = () => {
           <div className="w-full max-w-md">
             <div className="flex justify-center mb-10">
               <div className="flex items-center gap-3">
-                <span className="text-4xl font-black tracking-tighter text-gray-900">Mu Excite</span>
+                <span className="text-4xl font-black tracking-tighter text-gray-900">MuxDay</span>
               </div>
             </div>
 
@@ -265,7 +265,7 @@ export const Auth = () => {
                     whileHover={{ scale: 1.02 }}
                     className="w-full bg-gradient-to-r from-red-600 to-amber-500 text-white py-5 rounded-3xl font-bold text-xl shadow-lg flex items-center justify-center gap-3"
                   >
-                    <LogIn size={24} /> Enter Excite
+                    <LogIn size={24} /> Enter MuxDay
                   </motion.button>
 
                   <div className="relative py-4">
@@ -295,7 +295,7 @@ export const Auth = () => {
               </button>
             </div>
 
-            <div className="mt-16 text-center text-xs text-gray-400">© Mu X8 {new Date().getFullYear()}</div>
+            <div className="mt-16 text-center text-xs text-gray-400">© MuxDay {new Date().getFullYear()}</div>
           </div>
         </div>
       </div>
@@ -311,7 +311,7 @@ export const Auth = () => {
         </motion.div>
 
         <div className="text-center mb-10">
-          <h1 className="text-6xl font-black text-white tracking-[-3px]">X8</h1>
+          <h1 className="text-6xl font-black text-white tracking-[-3px]">MuxDay</h1>
           <p className="text-orange-300 text-xl mt-1">Find Your People</p>
         </div>
 
@@ -330,7 +330,7 @@ export const Auth = () => {
               <div className="space-y-4">
                 <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required className="w-full px-6 py-4 border border-orange-200 rounded-3xl text-lg" />
                 <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} required className="w-full px-6 py-4 border border-orange-200 rounded-3xl text-lg" />
-                <button type="submit" className="w-full py-5 bg-gradient-to-r from-red-600 to-orange-600 text-white font-bold text-xl rounded-3xl">Enter Excite</button>
+                <button type="submit" className="w-full py-5 bg-gradient-to-r from-red-600 to-orange-600 text-white font-bold text-xl rounded-3xl">Enter MuxDay</button>
                 <div className="text-center text-gray-400 font-bold text-xs py-2">OR</div>
                 <DiscordButton onClick={handleDiscordLogin} isLoading={isLoading} label="Discord Sign-in" />
               </div>
@@ -346,7 +346,7 @@ export const Auth = () => {
           </button>
         </div>
 
-        <div className="mt-12 text-xs text-white/60">© Mu Excite {new Date().getFullYear()}</div>
+        <div className="mt-12 text-xs text-white/60">© MuxDay {new Date().getFullYear()}</div>
       </div>
 
       <PolicyModal isOpen={isModalOpen} title={modalTitle} slug={modalSlug} onClose={closeModal} />
