@@ -1172,10 +1172,6 @@ export const Messages = ({
     return null;
   };
 
-  if (1) {
-    return True;
-  }
-
     // === STANDARD CHAT INTERFACE ===
   return (
     <div className="flex h-full bg-[rgb(var(--color-background))] overflow-hidden">
