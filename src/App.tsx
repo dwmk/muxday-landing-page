@@ -21,7 +21,7 @@ import { Analytics } from '@vercel/analytics/react';
 type ViewType = 'feed' | 'messages' | 'profile' | 'settings' | 'page' | 'stats' | 'communities';
 
 const SVG_PATH = "M2 17.5A4.5 4.5 0 0 1 6.5 13h2.7c.63 0 .945 0 1.186.123c.211.107.384.28.491.491c.123.24.123.556.123 1.186v2.7a4.5 4.5 0 1 1-9 0m11-11a4.5 4.5 0 1 1 4.5 4.5h-3.214c-.15 0-.224 0-.287-.007a1.125 1.125 0 0 1-.992-.992C13 9.938 13 9.864 13 9.714z M2 6.5a4.5 4.5 0 0 1 9 0v3c0 .349 0 .523-.038.666a1.13 1.13 0 0 1-.796.796C10.023 11 9.85 11 9.5 11h-3A4.5 4.5 0 0 1 2 6.5m11 8c0-.349 0-.523.038-.666c.104-.388.408-.692.796-.796c.143-.038.317-.038.666-.038h3a4.5 4.5 0 1 1-4.5 4.5z";
-const SVG_VIEWBOX = "0 0 600 600";
+const SVG_VIEWBOX = "0 0 24 24";
 
 // --- SPECIAL EVENT CONFIG --- (kept intact)
 export const SPECIAL_EVENT_MODE = false;
@@ -472,7 +472,7 @@ const [showUserMenu, setShowUserMenu] = useState(false);
     <div className="min-h-screen bg-[rgb(var(--color-background))]">
       {/* MODERN TOP NAV – DISTINCT DESKTOP + MOBILE LAYOUT */}
       <nav className="bg-[rgb(var(--color-surface))] border-b border-[rgb(var(--color-border))] sticky top-0 z-50 shadow-sm">
-        <div className="max-w-6xl mx-auto flex items-center justify-between px-4 h-14">
+        <div className="max-w-7xl w-full mx-auto flex items-center justify-between px-4 h-14">
           {/* Logo – always goes to Feed */}
           <div 
             onClick={() => { setView('feed'); setSelectedProfileId(undefined); setSelectedPostId(undefined); navigate('/'); }}
