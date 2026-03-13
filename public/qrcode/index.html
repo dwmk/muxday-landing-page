@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mux QR Code Generator</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0Ij48cGF0aCBmaWxsPSIjNWU3YmZkIiBkPSJNMy40NjQgMy40NjRDMiA0LjkzIDIgNy4yODYgMiAxMnMwIDcuMDcxIDEuNDY0IDguNTM1QzQuOTMgMjIgNy4yODYgMjIgMTIgMjJzNy4wNzEgMCA4LjUzNS0xLjQ2NUMyMiAxOS4wNzIgMjIgMTYuNzE0IDIyIDEyczAtNy4wNzEtMS40NjUtOC41MzZDMTkuMDcyIDIgMTYuNzE0IDIgMTIgMlM0LjkyOSAyIDMuNDY0IDMuNDY0IiBvcGFjaXR5PSIwLjUiLz48cGF0aCBmaWxsPSIjNWU3YmZkIiBkPSJNMTAuMDA0IDUuNzUyYS43NS43NSAwIDEgMC0uMDA4LTEuNWMtMS4wODIuMDA2LTEuOTguMDMtMi43MTMuMTU5Yy0uNzUyLjEzMS0xLjM5NS4zODItMS45MjIuODgzYy0uNDU1LjQzMy0uNzYuODcyLS45MjUgMS41MDNjLS4xNS41NzItLjE3NyAxLjI3NS0uMTg0IDIuMTk4YS43NS43NSAwIDEgMCAxLjUuMDExYy4wMDgtLjk0OS4wNC0xLjQ2Ni4xMzUtMS44MjhjLjA4LS4zMDMuMjA2LS41MS41MDktLjc5OGcuMjQyLS4yMy41NzItLjM5MiAxLjE0NS0uNDkyYy41OTItLjEwMyAxLjM3LS4xMyAyLjQ2My0uMTM2bTQtMS41YS43NS43NSAwIDAgMC0uMDA4IDEuNWMxLjA5My4wMDYgMS44NzEuMDMzIDIuNDYzLjEzNmMuNTczLjEuOTAzLjI2MiAxLjE0NS40OTJjLjMwMy4yODkuNDMuNDk1LjUwOS43OThjLjA5NS4zNjIuMTI4Ljg4LjEzNSAxLjgyOGEuNzUuNzUgMCAwIDAgMS41LS4wMTFjLS4wMDctLjkyMy0uMDM0LTEuNjI2LS4xODQtMi4xOThjLS4xNjYtLjYzLS40Ny0xLjA3LS45MjUtMS41MDNjLS41MjctLjUwMS0xLjE3LS43NTItMS45MjItLjg4M2MtLjczMy0uMTI5LTEuNjMxLS4xNTMtMi43MTMtLjE1OU01IDExLjI1YS43NS43NSAwIDAgMCAwIDEuNWgxNGEuNzUuNzUgMCAwIDAgMC0xLjV6bS43NTIgMy43NDVhLjc1Ljc1IDAgMSAwLTEuNS4wMTFjLjAwNy45MjMuMDM0IDEuNjI2LjE4NCAyLjE5OGcuMTY2LjYzLjQ3IDEuMDcuOTI1IDEuNTAzYy41MjcuNSAxLjE3Ljc1MSAxLjkyMi44ODNjLjczMy4xMjggMS42MzEuMTUzIDIuNzEzLjE1OWEuNzUuNzUgMCAwIDAgLjAwOC0xLjVjLTEuMDkzLS4wMDYtMS44NzEtLjAzMy0yLjQ2My0uMTM3Yy0uNTczLS4xLS45MDMtLjI2MS0xLjE0NS0uNDkyYy0uMzAzLS4yODgtLjQzLS40OTUtLjUwOS0uNzk3Yy0uMDk1LS4zNjItLjEyNy0uODgtLjEzNS0xLjgyOG0xMy45OTYuMDExYS43NS43NSAwIDEgMC0xLjUtLjAxMWMtLjAwOC45NDgtLjA0IDEuNDY2LS4xMzUgMS44MjhjLS4wOC4zMDItLjIwNi41MDktLjUwOS43OTdjLS4yNDIuMjMtLjU3Mi4zOTItMS4xNDUuNDkyYy0uNTkyLjEwNC0xLjM3LjEzLTIuNDYzLjEzN2EuNzUuNzUgMCAxIDAgLjAwOCAxLjVjMS4wODItLjAwNiAxLjk4LS4wMyAyLjcxMy0uMTZjLjc1Mi0uMTMgMS4zOTUtLjM4MSAxLjkyMi0uODgyYy40NTUtLjQzNC43Ni0uODczLjkyNS0xLjUwM2cuMTUtLjU3Mi4xNzctMS4yNzUuMTg0LTIuMTk4Ii8+PC9zdmc+">
+    <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0Ij48cGF0aCBmaWxsPSIjNWU3YmZkIiBkPSJNMy40NjQgMy40NjRDMiA0LjkzIDIgNy4yODYgMiAxMnMwIDcuMDcxIDEuNDY0IDguNTM1QzQuOTMgMjIgNy4yODYgMjIgMTIgMjJzNy4wNzEgMCA4LjUzNS0xLjQ2NUMyMiAxOS4wNzIgMjIgMTYuNzE0IDIyIDEyczAtNy4wNzEtMS40NjUtOC41MzZDMTkuMDcyIDIgMTYuNzE0IDIgMTIgMlM0LjkyOSAyIDMuNDY0IDMuNDY0IiBvcGFjaXR5PSIwLjUiLz48cGF0aCBmaWxsPSIjNWU3YmZkIiBkPSJNMTAuMDA0IDUuNzUyYS43NS43NSAwIDEgMC0uMDA4LTEuNWMtMS4wODIuMDA2LTEuOTguMDMtMi43MTMuMTU5Yy0uNzUyLjEzMS0xLjM5NS4zODItMS45MjIuODgzYy0uNDU1LjQzMy0uNzYuODcyLS45MjUgMS41MDNjLS4xNS41NzItLjE3NyAxLjI3NS0uMTg0IDIuMTk4YS43NS43NSAwIDEgMCAxLjUuMDExYy4wMDgtLjk0OS4wNC0xLjQ2Ni4xMzUtMS44MjhjLjA4LS4zMDMuMjA2LS41MS41MDktLjc5OGcuMjQyLS4yMy41NzItLjM5MiAxLjE0NS0uNDkyYy41OTItLjEwMyAxLjM3LS4xMyAyLjQ2My0uMTM2bTQtMS41YS43NS43NSAwIDAgMC0uMDA4IDEuNWMxLjA5My4wMDYgMS44NzEuMDMzIDIuNDYzLjEzNmMuNTczLjEuOTAzLjI2MiAxLjE0NS40OTJjLjMwMy4yODkuNDMuNDk1LjUwOS43OThjLjA5NS4zNjIuMTI4Ljg4LjEzNSAxLjgyOGEuNzUuNzUgMCAwIDAgMS41LS4wMTFjLS4wMDctLjkyMy0uMDM0LTEuNjI2LS4xODQtMi4xOThjLS4xNjYtLjYzLS40Ny0xLjA3LS45MjUtMS41MDNjLS41MjctLjUwMS0xLjE3LS43NTItMS45MjItLjg4M2MtLjczMy0uMTI5LTEuNjMxLS4xNTMtMi43MTMtLjE1OU01IDExLjI1YS43NS43NSAwIDAgMCAwIDEuNWgxNGEuNzUuNzUgMCAwIDAgMC0xLjV6bS43NTIgMy43NDVhLjc1Ljc1IDAgMSAwLTEuNS4wMTFjLjAwNy45MjMuMDM0IDEuNjI2LjE4NCAyLjE5OGcuMTY2LjYzLjQ3IDEuMDcuOTI1IDEuNTAzYy41MjcuNSAxLjE3Ljc1MSAxLjkyMi44ODNjLjczMy4xMjggMS42MzEuMTUzIDIuNzEzLjE1OWEuNzUuNzUgMCAwIDAgLjAwOC0xLjVjLTEuMDkzLS4wMDYtMS44NzEtLjAzMy0yLjQ2My0uMTM3Yy0uNTczLS4xLS45MDMtLjI2MS0xLjE0NS0uNDkyYy0uMzAzLS4yODgtLjQzLS40OTUtLjUwOS0uNzk3Yy0uMDk1LS4zNjItLjEyNy0uODgtLjEzNS0xLjgyOG0xMy45OTYuMDExYS43NS43NSAwIDEgMC0xLjUtLjAxMWMtLjAwOC45NDgtLjA0IDEuNDY2LS4xMzUgMS44MjhjLS4wOC4zMDItLjIwNi41MDktLjUwOS43OTdjLS4yNDIuMjMtLjU3Mi4zOTItMS4xNDUuNDkyYy0uNTkyLjEwNC0xLjM3LjEzLTIuNDYzLjEzN2EuNzUuNzUgMCAxIDAgLjAwOCAxLjVjMS4wODItLjAwNiAxLjk4LS4wMyAyLjcxMy0uMTZjLjc1Mi0uMTMgMS4zOTUtLjM4MSAxLjkyMi0uODgyYy40NTUtLjQzNC43Ni0uODczLjkyNS0xLjUwM2cuMTUtLjU3Mi4xNzctMS4yNzUuMTg0LTIuMTk4Ii8+PC9zdmc+">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qr-code-styling@1.5.0/lib/qr-code-styling.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        :root {
+            --bg: #fefefe;
+            --panel: #fafafa;
+            --accent: #5e7bfd;
+            --accent2: #848ff5;
+            --text: #383838;
+            --font: 'Outfit', sans-serif;
+            --track-bg: #ccc;
+            --thumb-size: 26px;
+        }
+        [data-theme="dark"] {
+            --bg: #121212;
+            --panel: #1e1e1e;
+            --text: #e0e0e0;
+            --track-bg: var(--accent);
+        }
+        [data-theme="dark"] #header {
+            background: var(--bg);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            border-bottom: 1px solid #333;
+        }
+        [data-theme="dark"] .panel {
+            background: var(--panel);
+            box-shadow: 0 2px 12px rgba(0,0,0,0.2);
+            border: 1px solid #333;
+        }
+        [data-theme="dark"] select, [data-theme="dark"] button, [data-theme="dark"] input {
+            background: #2a2a2a;
+            color: var(--text);
+            border: 1px solid #444;
+        }
+        [data-theme="dark"] button:hover {
+            background: var(--accent2);
+            color: #000;
+        }
+        [data-theme="dark"] .info-item {
+            border-bottom: 1px solid #555;
+        }
+        [data-theme="dark"] .warning {
+            background: rgba(253, 123, 94, 0.3);
+        }
+        [data-theme="dark"] footer {
+            color: #999;
+        }
+        [data-theme="dark"] .toast {
+            background: #ff6b6b;
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            background: var(--bg);
+            color: var(--text);
+            font-family: var(--font);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            overflow-x: hidden;
+            padding-top: 4rem;
+        }
+        a {
+          text-decoration: none;
+          color: var(--accent);
+        }
+        #header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem 2rem;
+            background: var(--bg);
+            z-index: 1000;
+            width: 100%;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border-bottom: 1px solid #e0e0e0;
+        }
+        h1 {
+            color: var(--accent);
+            letter-spacing: 1px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 16px;
+            width: 90%;
+            max-width: 1100px;
+            margin-bottom: 40px;
+        }
+        .panel {
+            background: var(--panel);
+            border-radius: 12px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.13);
+            border: 1px solid #f2f2f2;
+        }
+        .panel h2 {
+            margin: 0 0 10px;
+            color: var(--accent);
+            font-size: 1.1rem;
+        }
+        label {
+            font-size: 0.9rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        input[type="range"] {
+            width: 150px;
+            accent-color: var(--accent2);
+        }
+        select, button, input {
+            background: #f1f1f1;
+            color: var(--accent);
+            border: 1px solid var(--accent2);
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-family: var(--font);
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        input[type="file"] {
+            padding: 6px;
+            cursor: pointer;
+        }
+        input[type="color"] {
+            padding: 0;
+            height: 40px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: var(--accent2);
+            color: #000;
+        }
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            padding: 4px 0;
+            border-bottom: 1px solid #333;
+        }
+        .info-item:last-child {
+            border-bottom: none;
+        }
+        .value {
+            color: var(--accent);
+            font-family: monospace;
+        }
+        .warning {
+            background: rgba(253, 123, 94, 0.5);
+            padding: 8px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            text-align: center;
+            margin-top: 10px;
+        }
+        footer {
+            margin-top: auto;
+            padding: 20px;
+            text-align: center;
+            color: #666;
+            font-size: 0.8rem;
+            width: 100%;
+        }
+       iconify-icon {
+          display: inline-flex;
+          align-items: center;
+          vertical-align: middle;
+        }
+        #theme-toggle {
+            width: 60px;
+            height: 34px;
+            background: var(--track-bg);
+            border-radius: 17px;
+            cursor: pointer;
+            border: none;
+            padding: 4px;
+            display: flex;
+            align-items: center;
+            box-sizing: border-box;
+            margin-left: auto;
+            transition: background-color 0.3s ease;
+        }
+        #theme-toggle iconify-icon {
+            width: var(--thumb-size);
+            height: var(--thumb-size);
+            background: white;
+            border-radius: 50%;
+            color: var(--accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.3s ease;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+            flex-shrink: 0;
+        }
+        #theme-toggle[data-state="light"] iconify-icon {
+            transform: translateX(0);
+        }
+        #theme-toggle[data-state="dark"] iconify-icon {
+            transform: translateX(26px);
+        }
+        #qrCode {
+            margin: 20px 0;
+            transition: transform 0.3s;
+            display: flex;
+            justify-content: center;
+        }
+        #qrCode:hover {
+            transform: scale(1.05);
+        }
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #ff4444;
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            opacity: 0;
+            transition: opacity 0.3s;
+            z-index: 1000;
+        }
+        .toast.show { opacity: 1; }
+    </style>
+</head>
+<body>
+    <div id="header">
+        <img src="https://huanmux.github.io/assets/logo/favicon.png" alt="Mux QR Logo" style="height: 2rem; width: 2rem; border-radius: 50%; margin-right: 0.75rem;">
+        <h1 style="margin: 0; font-size: 1rem; line-height: 1; color: var(--accent); letter-spacing: 1px;">Mux QR</h1>
+        <button id="theme-toggle" data-state="light">
+            <iconify-icon icon="solar:moon-bold-duotone" style="width: 1.5em; height: 1.5em; color: var(--accent);"></iconify-icon>
+        </button>
+    </div>
+    <p style="text-align: center; max-width: 800px; opacity: 0.8;">Generate custom QR codes easily.</p>
+
+    <div class="controls">
+        <div class="panel">
+            <h2><iconify-icon icon="solar:password-minimalistic-input-bold-duotone" style="width: 1em; height: 1em; color: var(--accent); margin-right: 0.5em;"></iconify-icon>Inputs</h2>
+
+            <label for="qrText">Text or URL</label>
+            <input type="text" id="qrText" placeholder="Enter text or URL">
+
+            <label for="template">QR Code Template</label>
+            <select id="template">
+                <option value="square">Default (Square)</option>
+                <option value="rounded">Rounded</option>
+                <option value="dots">Dots</option>
+            </select>
+
+            <label for="fgColor">Foreground Color</label>
+            <input type="color" id="fgColor" value="#000000">
+
+            <label for="bgColor">Background Color</label>
+            <input type="color" id="bgColor" value="#ffffff">
+
+            <label for="logo">Upload Logo (Optional)</label>
+            <input type="file" id="logo" accept="image/*">
+        </div>
+
+        <div class="panel">
+            <h2><iconify-icon icon="solar:eye-bold-duotone" style="width: 1em; height: 1em; color: var(--accent); margin-right: 0.5em;"></iconify-icon>Preview</h2>
+            <div id="qrCode"></div>
+            <button id="downloadBtn">Download QR Code</button>
+        </div>
+    </div>
+
+    <div id="toast" class="toast"></div>
+    <footer>
+        © Mux 2025
+    </footer>
+
+    <script>
+
+        // Theme Toggle
+        const themeToggle = document.getElementById('theme-toggle');
+        const currentTheme = localStorage.getItem('theme') || 'light';
+        document.documentElement.setAttribute('data-theme', currentTheme);
+        themeToggle.setAttribute('data-state', currentTheme);
+        const icon = themeToggle.querySelector('iconify-icon');
+        icon.setAttribute('icon', currentTheme === 'light' ? 'solar:sun-bold-duotone' : 'solar:moon-bold-duotone');
+        themeToggle.addEventListener('click', () => {
+            const current = document.documentElement.getAttribute('data-theme');
+            const nextTheme = current === 'light' ? 'dark' : 'light';
+            document.documentElement.setAttribute('data-theme', nextTheme);
+            localStorage.setItem('theme', nextTheme);
+            themeToggle.setAttribute('data-state', nextTheme);
+            icon.setAttribute('icon', nextTheme === 'light' ? 'solar:sun-bold-duotone' : 'solar:moon-bold-duotone');
+        });
+
+    const qrText = document.getElementById('qrText');
+    const template = document.getElementById('template');
+    const fgColor = document.getElementById('fgColor');
+    const bgColor = document.getElementById('bgColor');
+    const logoInput = document.getElementById('logo');
+    const qrCodeDiv = document.getElementById('qrCode');
+    const downloadBtn = document.getElementById('downloadBtn');
+    const toast = document.getElementById('toast');
+
+    let logoData = null;
+
+    const qrCode = new QRCodeStyling({
+      width: 300,
+      height: 300,
+      data: "https://example.com",
+      dotsOptions: { color: "#000", type: "square" },
+      backgroundOptions: { color: "#fff" },
+    });
+
+    qrCode.append(qrCodeDiv);
+
+    function showToast(msg) {
+      toast.textContent = msg;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+
+    function updateQRCode() {
+      const text = qrText.value.trim() || "DM";
+      const style = template.value;
+      let type = "square";
+      if (style === "rounded") type = "rounded";
+      else if (style === "dots") type = "dots";
+
+      qrCode.update({
+        data: text,
+        dotsOptions: { color: fgColor.value, type },
+        backgroundOptions: { color: bgColor.value },
+        image: logoData || null,
+      });
+    }
+
+    logoInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) { logoData = null; updateQRCode(); return; }
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        logoData = event.target.result;
+        updateQRCode();
+      };
+      reader.readAsDataURL(file);
+    });
+
+    qrText.addEventListener('input', updateQRCode);
+    template.addEventListener('change', updateQRCode);
+    fgColor.addEventListener('input', updateQRCode);
+    bgColor.addEventListener('input', updateQRCode);
+
+    downloadBtn.addEventListener('click', async () => {
+      const blob = await qrCode.getRawData("png");
+      const link = document.createElement("a");
+      link.download = "mux_qr.png";
+      link.href = URL.createObjectURL(blob);
+      link.click();
+    });
+    updateQRCode();
+    </script>
+</body>
+</html>

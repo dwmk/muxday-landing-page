@@ -172,7 +172,7 @@ const [showUserMenu, setShowUserMenu] = useState(false);
         const rawSlug = slugMatch[1];
         const slug = decodeURIComponent(rawSlug);
 
-        if (!['user', 'invite', 'gazebo', 'message', 'stats', 'settings'].includes(rawSlug.toLowerCase())) {
+        if (!['user', 'invite', 'gazebo', 'message', 'stats', 'settings','communities'].includes(rawSlug.toLowerCase())) {
           const { data: profileData } = await supabase
             .from('profiles')
             .select('id')

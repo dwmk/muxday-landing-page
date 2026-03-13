@@ -8,7 +8,6 @@ import { EmojiPicker } from './EmojiPicker';
 
 // Lazy load components to prevent Circular Dependency ReferenceErrors
 const Calls = lazy(() => import('./Calls').then(module => ({ default: module.Calls })));
-const Gazebos = lazy(() => import('./Gazebos').then(module => ({ default: module.Gazebos })));
 
 const extractFirstUrl = (text: string): string | null => {
   const urlRegex = /(https?:\/\/[^\s]+)/g;
@@ -195,7 +194,7 @@ export const Messages = ({
   initialTab?: 'chats' | 'gazebos',
   initialGazeboId?: string | null
 }) => {
-  const [activeTab, setActiveTab] = useState<'chats' | 'gazebos'>(initialTab);
+
   const [conversations, setConversations] = useState<Profile[]>([]);
   const [selectedUser, setSelectedUser] = useState<Profile | null>(null);
   const [messages, setMessages] = useState<AppMessage[]>([]);
@@ -561,9 +560,6 @@ export const Messages = ({
     setConversations(sorted);
   };
 
-  useEffect(() => {
-    if (initialTab) setActiveTab(initialTab);
-  }, [initialTab]);
 
   useEffect(() => {
     const handleOpenDM = (e: any) => {
