@@ -64,7 +64,7 @@ export const CustomPage = ({ slug }: CustomPageProps) => {
         <div className="bg-[rgb(var(--color-surface))] rounded-2xl p-6 border border-[rgb(var(--color-border))] shadow-sm">
           <div className="flex items-center gap-4">
             <img
-              src={profile?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=liaotian`}
+              src={profile?.avatar_url || `https://muktoverse.vercel.app/asset/images/disorder_favicon.png`}
               alt="liaotian"
               className="w-16 h-16 rounded-full border-2 border-[rgb(var(--color-primary))]"
             />
@@ -75,14 +75,14 @@ export const CustomPage = ({ slug }: CustomPageProps) => {
               </div>
               <p className="text-[rgb(var(--color-text-secondary))]">@{profile?.username || 'mu'}</p>
               <p className="text-sm text-[rgb(var(--color-text-secondary))] mt-1">
-                <a href="/" className="text-[rgb(var(--color-accent))]">Sign Up</a> for Excite
+                <a href="/" className="text-[rgb(var(--color-accent))]">Sign Up</a> for MuxDay
               </p>
             </div>
           </div>
         </div>
 
         <div className="mt-10 text-center text-sm text-[rgb(var(--color-text-secondary))]">
-          © Mu Excite {new Date().getFullYear()}
+          © MuxDay {new Date().getFullYear()}
         </div>
       </div>
     </div>

@@ -474,12 +474,14 @@ const [showUserMenu, setShowUserMenu] = useState(false);
       <nav className="bg-[rgb(var(--color-surface))] border-b border-[rgb(var(--color-border))] sticky top-0 z-50 shadow-sm">
         <div className="max-w-7xl w-full mx-auto flex items-center justify-between px-4 h-14">
           {/* Logo – always goes to Feed */}
-          <div 
+          <svg 
+            xmlns="http://www.w3.org/2000/svg" 
+            viewBox={SVG_VIEWBOX} 
+            className="w-[32px] h-[32px] cursor-pointer active:scale-95 transition-transform" 
             onClick={() => { setView('feed'); setSelectedProfileId(undefined); setSelectedPostId(undefined); navigate('/'); }}
-            className="flex items-center gap-3 cursor-pointer active:scale-95 transition-transform"
           >
             <path d={SVG_PATH} fill="rgb(var(--color-primary))" />
-          </div>
+          </svg>
 
           {/* DESKTOP TABS – clean pill-style main tabs (Feed / Messages / Profile) */}
           <div className="hidden md:flex items-center bg-[rgb(var(--color-surface-hover))] rounded-3xl p-1 shadow-inner mx-auto">

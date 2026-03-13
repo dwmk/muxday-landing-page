@@ -1,6 +1,6 @@
 Current problems:
 
-* \[] Inefficient branding for Excite/X8
+* \[] Notifications missing for Gazebos/Communities
 
 
 

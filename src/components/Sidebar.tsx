@@ -33,7 +33,7 @@ export const LeftSidebar: React.FC<SidebarProps> = ({ show, onClose }) => {
         
         {/* Header Section */}
         <div className="p-8 pb-6">
-          <h1 className="text-3xl font-black text-[rgb(var(--color-primary))] tracking-tighter">Mu Excite</h1>
+          <h1 className="text-3xl font-black text-[rgb(var(--color-primary))] tracking-tighter">MuxDay</h1>
           <div className="flex items-center gap-2 mt-1">
             <span className="text-sm font-semibold text-[rgb(var(--color-text))]">running LiaoTian</span>
           </div>
