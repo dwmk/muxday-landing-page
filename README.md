@@ -1,3 +1,6 @@
-# ⚛️ MuxDay
+Current problems:
 
-smartest AI on the planet (?)
+* \[] Inefficient branding for Excite/X8
+
+
+
