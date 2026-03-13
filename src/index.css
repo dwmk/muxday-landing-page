@@ -160,6 +160,50 @@ body {
   --color-surface-hover: 252, 235, 240; /* Whipped Strawberry */
 }
 
+/* ====================== CUSTOM DARK SCROLLBAR ====================== */
+        /* Matches the site's zinc-950 background perfectly */
+
+        /* Chrome / Edge / Safari */
+        ::-webkit-scrollbar {
+            width: 7px;
+            height: 7px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #09090b;           /* exact site background (zinc-950) */
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #27272a;           /* zinc-800 */
+            border-radius: 9999px;
+            border: 1px solid #18181b;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #FF4400;           /* your accent color */
+        }
+
+        /* Firefox */
+        html {
+            scrollbar-width: thin;
+            scrollbar-color: #27272a #09090b;
+        }
+
+        /* Force the same style on the desktop sidebar (extra smooth) */
+        aside {
+            scrollbar-width: thin;
+            scrollbar-color: #27272a #09090b;
+        }
+
+        /* If you ever add more scrollable panels later, just add class="custom-scroll" to them */
+        .custom-scroll::-webkit-scrollbar-track {
+            background: #09090b;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: #27272a;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb:hover {
+            background: #FF4400;
+        }
+
 
 /* ======================================= */
 /* 🐉 SVG Logo Fill Animation (Vertical) */
