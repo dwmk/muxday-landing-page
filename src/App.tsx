@@ -396,12 +396,12 @@ const [showUserMenu, setShowUserMenu] = useState(false);
   if (!user || !profile) {
     if (view === 'profile' && selectedProfileId) {
       return (
-        <div className="min-h-screen bg-[rgb(var(--color-background))]">
+	     <div className="min-h-screen bg-[rgb(var(--color-background))]">
           <div className="bg-[rgb(var(--color-surface))] border-b border-[rgb(var(--color-border))] sticky top-0 z-50 shadow-sm">
             <div className="max-w-6xl mx-auto flex items-center justify-between px-4 h-14">
-             
-<span className="font-bold text-xl tracking-tighter hidden sm:block text-[rgb(var(--color-text))]">X8</span>
-
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox={SVG_VIEWBOX} className="w-[32px] h-[32px] cursor-pointer" onClick={() => navigate('/')}>
+                <path d={SVG_PATH} fill="rgb(var(--color-primary))" />
+              </svg>
               <a href="/" className="text-[rgb(var(--color-primary))] hover:text-[rgba(var(--color-primary),0.8)] font-bold">← Back to Home</a>
             </div>
           </div>
@@ -478,56 +478,55 @@ const [showUserMenu, setShowUserMenu] = useState(false);
             onClick={() => { setView('feed'); setSelectedProfileId(undefined); setSelectedPostId(undefined); navigate('/'); }}
             className="flex items-center gap-3 cursor-pointer active:scale-95 transition-transform"
           >
-            
-            <span className="font-bold text-xl tracking-tighter hidden sm:block text-[rgb(var(--color-text))]">X8</span>
+            <path d={SVG_PATH} fill="rgb(var(--color-primary))" />
           </div>
 
           {/* DESKTOP TABS – clean pill-style main tabs (Feed / Messages / Profile) */}
-          <div className="hidden md:flex items-center bg-[rgb(var(--color-surface-hover))] rounded-3xl p-1 shadow-inner">
-  <motion.button
-    onClick={() => { setView('feed'); setSelectedProfileId(undefined); setSelectedPostId(undefined); navigate('/'); }}
-    whileHover={{ scale: 1.03 }}
-    whileTap={{ scale: 0.97 }}
-    className={`flex items-center gap-2 px-5 py-2.5 rounded-3xl font-medium text-sm transition-all ${view === 'feed' ? 'bg-white shadow text-[rgb(var(--color-primary))]' : 'hover:bg-white/70 text-[rgb(var(--color-text-secondary))]'}`}
-  >
-    <Home size={19} /> Feed
-  </motion.button>
+          <div className="hidden md:flex items-center bg-[rgb(var(--color-surface-hover))] rounded-3xl p-1 shadow-inner mx-auto">
+            <motion.button
+              onClick={() => { setView('feed'); setSelectedProfileId(undefined); setSelectedPostId(undefined); navigate('/'); }}
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
+              className={`flex items-center gap-2 px-7 py-2.5 rounded-3xl font-medium text-sm transition-all ${view === 'feed' ? 'bg-white shadow text-[rgb(var(--color-primary))]' : 'hover:bg-white/70 text-[rgb(var(--color-text-secondary))]'}`}
+            >
+              <Home size={19} /> Feed
+            </motion.button>
 
-  <motion.button
-    onClick={() => { setView('messages'); setSelectedProfileId(undefined); setSelectedPostId(undefined); navigate('/message'); }}
-    whileHover={{ scale: 1.03 }}
-    whileTap={{ scale: 0.97 }}
-    className={`flex items-center gap-2 px-5 py-2.5 rounded-3xl font-medium text-sm transition-all relative ${view === 'messages' ? 'bg-white shadow text-[rgb(var(--color-primary))]' : 'hover:bg-white/70 text-[rgb(var(--color-text-secondary))]'}`}
-  >
-    <MessageSquare size={19} />
-    Messages
-    {unreadMessages > 0 && (
-      <div className="absolute -top-0.5 -right-1 bg-red-500 text-white text-[9px] font-bold px-1.5 rounded-full min-w-[17px] h-[17px] flex items-center justify-center">
-        {unreadMessages}
-      </div>
-    )}
-  </motion.button>
+            <motion.button
+              onClick={() => { setView('messages'); setSelectedProfileId(undefined); setSelectedPostId(undefined); navigate('/message'); }}
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
+              className={`flex items-center gap-2 px-7 py-2.5 rounded-3xl font-medium text-sm transition-all relative ${view === 'messages' ? 'bg-white shadow text-[rgb(var(--color-primary))]' : 'hover:bg-white/70 text-[rgb(var(--color-text-secondary))]'}`}
+            >
+              <MessageSquare size={19} />
+              Messages
+              {unreadMessages > 0 && (
+                <div className="absolute -top-0.5 -right-1 bg-red-500 text-white text-[9px] font-bold px-1.5 rounded-full min-w-[17px] h-[17px] flex items-center justify-center">
+                  {unreadMessages}
+                </div>
+              )}
+            </motion.button>
 
-  <motion.button
-    onClick={() => { setView('communities'); setSelectedProfileId(undefined); setSelectedPostId(undefined); navigate('/communities'); }}
-    whileHover={{ scale: 1.03 }}
-    whileTap={{ scale: 0.97 }}
-    className={`flex items-center gap-2 px-5 py-2.5 rounded-3xl font-medium text-sm transition-all ${view === 'communities' ? 'bg-white shadow text-[rgb(var(--color-primary))]' : 'hover:bg-white/70 text-[rgb(var(--color-text-secondary))]'}`}
-  >
-    <MessagesSquare size={19} />
-    Communities
-  </motion.button>
+            <motion.button
+              onClick={() => { setView('communities'); setSelectedProfileId(undefined); setSelectedPostId(undefined); navigate('/communities'); }}
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
+              className={`flex items-center gap-2 px-7 py-2.5 rounded-3xl font-medium text-sm transition-all ${view === 'communities' ? 'bg-white shadow text-[rgb(var(--color-primary))]' : 'hover:bg-white/70 text-[rgb(var(--color-text-secondary))]'}`}
+            >
+              <MessagesSquare size={19} />
+              Communities
+            </motion.button>
 
-  <motion.button
-    onClick={() => { if (!profile?.username) return; navigate(`/?user=${profile.username}`); setSelectedProfileId(undefined); setView('profile'); }}
-    whileHover={{ scale: 1.03 }}
-    whileTap={{ scale: 0.97 }}
-    className={`flex items-center gap-2 px-5 py-2.5 rounded-3xl font-medium text-sm transition-all ${view === 'profile' && (!selectedProfileId || selectedProfileId === user.id) ? 'bg-white shadow text-[rgb(var(--color-primary))]' : 'hover:bg-white/70 text-[rgb(var(--color-text-secondary))]'}`}
-  >
-    <User size={19} />
-    Profile
-  </motion.button>
-</div>
+            <motion.button
+              onClick={() => { if (!profile?.username) return; navigate(`/?user=${profile.username}`); setSelectedProfileId(undefined); setView('profile'); }}
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
+              className={`flex items-center gap-2 px-7 py-2.5 rounded-3xl font-medium text-sm transition-all ${view === 'profile' && (!selectedProfileId || selectedProfileId === user.id) ? 'bg-white shadow text-[rgb(var(--color-primary))]' : 'hover:bg-white/70 text-[rgb(var(--color-text-secondary))]'}`}
+            >
+              <User size={19} />
+              Profile
+            </motion.button>
+          </div>
 
           {/* RIGHT CONTROLS – Search + Separate Notifications button + quick profile avatar */}
           <div className="flex items-center gap-1">
