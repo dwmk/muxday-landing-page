@@ -1,6 +1,14 @@
 {
   "rewrites": [
     {
+      "source": "/landing.html",
+      "destination": "/landing.html"
+    },
+    {
+      "source": "/app/:path*",
+      "destination": "/index.html"
+    },
+    {
       "source": "/:path*",
       "destination": "/index.html"
     }

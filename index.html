@@ -39,13 +39,12 @@
 <meta name="twitter:description" content="Socialize without any distractions or data stealing hazards. Mu Excite is made for a social diversity. Join the bubble or host your own!"/>
   </head>
   <body>
-    <script>
+ <script>
   const path = window.location.pathname;
-  const full = window.location.pathname + window.location.search;
   if (path === '/' || path === '') {
     window.location.replace('/landing.html');
-  } else if (!path.startsWith('/app')) {
-    window.location.replace('/app' + (path === '/' ? '' : full));
+  } else if (!path.startsWith('/app') && path !== '/landing.html') {
+    window.location.replace('/app' + (path === '/' ? '' : path + window.location.search));
   }
 </script>
     <div id="root"></div>
