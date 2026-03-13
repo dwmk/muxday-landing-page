@@ -556,10 +556,6 @@ export const Messages = ({
   };
 
   useEffect(() => {
-    if (initialTab) setActiveTab(initialTab);
-  }, [initialTab]);
-
-  useEffect(() => {
     const handleOpenDM = (e: any) => {
       const profile = e.detail;
       if (profile && profile.id !== user?.id) {
@@ -1169,6 +1165,60 @@ export const Messages = ({
     }
     return null;
   };
+
+  // === GAZEBOS INTERFACE OVERRIDE ===
+  if (activeTab === 'gazebos') {
+    return (
+      <div className="flex h-full bg-[rgb(var(--color-background))] flex-col md:flex-row text-[rgb(var(--color-text))]">
+        <Suspense fallback={<div className="p-4">Loading Calls...</div>}>
+          <Calls />
+        </Suspense>
+        
+        {/* Mobile Tab Switcher */}
+        <div className="md:hidden flex-shrink-0 p-2 bg-[rgb(var(--color-surface))] border-b border-[rgb(var(--color-border))] flex gap-2 z-50">
+          <button 
+            onClick={() => setActiveTab('chats')} 
+            className="flex-1 p-2 rounded font-bold text-sm bg-[rgb(var(--color-surface-hover))] text-[rgb(var(--color-text-secondary))]"
+          >
+            Chats
+          </button>
+          <button 
+            className="flex-1 p-2 rounded font-bold text-sm bg-[rgb(var(--color-primary))] text-[rgb(var(--color-text-on-primary))]"
+          >
+            Gazebos
+          </button>
+        </div>
+        
+        {/* Desktop Sidebar Stub */}
+        <div className="hidden md:flex flex-col w-16 bg-[rgb(var(--color-surface))] border-r border-[rgb(var(--color-border))] items-center py-4 gap-4 z-50 flex-shrink-0">
+          <button 
+            onClick={() => setActiveTab('chats')} 
+            title="Direct Messages" 
+            className="p-3 rounded-full text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-surface-hover))] transition"
+          >
+            <MessageSquare size={24} />
+          </button>
+          <button 
+            title="Gazebos" 
+            className="p-3 rounded-full bg-[rgb(var(--color-primary))] text-[rgb(var(--color-text-on-primary))] shadow-md transition"
+          >
+            <Users size={24} />
+          </button>
+        </div>
+
+        {/* Main Gazebo Content */}
+        <div className="flex-1 min-w-0 h-full relative overflow-hidden">
+             <Suspense fallback={<div className="flex items-center justify-center h-full">Loading Gazebos...</div>}>
+                 <Gazebos 
+                    initialInviteCode={initialInviteCode} 
+                    onInviteHandled={onInviteHandled}
+                    initialGazeboId={initialGazeboId}
+                 />
+             </Suspense>
+        </div>
+      </div>
+    );
+  }
 
     // === STANDARD CHAT INTERFACE ===
   return (
