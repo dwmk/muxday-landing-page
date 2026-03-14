@@ -145,7 +145,6 @@ body {
   --color-surface-hover: 55, 45, 35;
 }
 
-
 .theme-suwuicide {
   --color-accent: 250, 98, 240;
   --color-primary: 159, 240, 255;
@@ -158,6 +157,60 @@ body {
   --color-border: 240, 220, 225;       /* Frosted Petal */
   --color-text-secondary: 150, 130, 125; /* Dusty Taupe */
   --color-surface-hover: 252, 235, 240; /* Whipped Strawberry */
+}
+
+.theme-muxday {
+  /* Vibrant Mint as the main highlight */
+  --color-accent: 139, 232, 203;        /* 8BE8CB */
+  
+  /* Slate Teal for primary actions */
+  --color-primary: 126, 162, 170;       /* 7EA2AA */
+
+  /* Dark Charcoal Foundation */
+  --color-background: 48, 54, 51;      /* 303633 */
+  
+  /* High contrast text */
+  --color-text: 245, 248, 248;         /* Off-white for readability */
+  --color-text-on-primary: 255, 255, 255; 
+
+  /* Layered surfaces using Muted Lavender */
+  --color-surface: 136, 141, 167;      /* 888DA7 */
+  
+  /* Borders using Dusty Purple */
+  --color-border: 156, 122, 151;       /* 9C7A97 */
+  
+  /* Secondary text using the Slate Teal */
+  --color-text-secondary: 126, 162, 170; /* 7EA2AA */
+  
+  /* Hover state: a lightened version of the surface lavender */
+  --color-surface-hover: 156, 161, 187; 
+}
+
+.theme-ocelot {
+  /* Mauve as the standout accent */
+  --color-accent: 156, 122, 151;         /* 9C7A97  */
+
+  /* Muted Indigo for primary elements */
+  --color-primary: 136, 141, 167;        /* 888DA7  */
+
+  /* The Deep Charcoal Base */
+  --color-background: 48, 54, 51;       /* 303633  */
+
+  /* Text and contrast */
+  --color-text: 235, 230, 240;          /* Soft lavender-white for readability */
+  --color-text-on-primary: 255, 255, 255; 
+
+  /* Surface layers using the darker Indigo tone */
+  --color-surface: 65, 68, 85;          /* A darkened variation of 888DA7  */
+  
+  /* Borders using the Mauve tone */
+  --color-border: 156, 122, 151;        /* 9C7A97  */
+
+  /* Secondary text using Slate Teal for a cool contrast */
+  --color-text-secondary: 126, 162, 170; /* 7EA2AA  */
+
+  /* Hover state: Brightened Mauve */
+  --color-surface-hover: 176, 142, 171; 
 }
 
 /* ====================== CUSTOM SCROLLBAR ====================== */

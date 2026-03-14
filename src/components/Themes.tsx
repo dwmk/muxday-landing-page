@@ -9,16 +9,18 @@ interface ThemePreset {
 }
 
 const presets: ThemePreset[] = [
-  { value: 'default-theme', name: 'Excite', desc: ''},
+  { value: 'default-theme', name: 'Excite', desc: 'default theme'},
   { value: 'liaoverse', name: 'Liaoverse', desc: '' },
   { value: 'cooper-black', name: 'Cooper Black', desc: '' },
   { value: 'knightspeak', name: 'Knightspeak', desc: '' },
   { value: 'wildest-dimensions', name: 'Wildest Dimensions', desc: ''},
   { value: 'one-one-one', name: 'One One One', desc: ''},
-  { value: 'cyberlush', name: 'Cyber Lush', desc: ''},
-  { value: 'frostbyte', name: 'Frost Byte', desc: ''},
-  { value: 'soulamber', name: 'Soul Amber', desc: ''},
-  { value: 'suwuicide', name: 'Suwuicide', desc: 'collaboration theme'}
+  { value: 'cyberlush', name: 'Show Em Greens', desc: ''},
+  { value: 'frostbyte', name: 'Frozen Garden', desc: ''},
+  { value: 'soulamber', name: 'Old is Gold', desc: ''},
+  { value: 'suwuicide', name: 'Suwuicide', desc: 'collaboration theme'},
+  { value: 'ocelot', name: 'Ocelot', desc: 'collaboration theme'},
+  { value: 'muxday', name: 'MuxDay', desc: ''}
 
 ];
 
