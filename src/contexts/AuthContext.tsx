@@ -71,7 +71,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const { error } = await supabase.auth.signInWithOAuth({
     provider: 'discord',
     options: {
-      redirectTo: window.location.origin, // Adjust this if you have a specific callback route
+      redirectTo: `${window.location.origin}/app`, // Adjust this if you have a specific callback route
     },
   });
   if (error) throw error;
