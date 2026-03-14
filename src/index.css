@@ -160,8 +160,7 @@ body {
   --color-surface-hover: 252, 235, 240; /* Whipped Strawberry */
 }
 
-/* ====================== CUSTOM DARK SCROLLBAR ====================== */
-        /* Matches the site's zinc-950 background perfectly */
+/* ====================== CUSTOM SCROLLBAR ====================== */
 
         /* Chrome / Edge / Safari */
         ::-webkit-scrollbar {
@@ -169,39 +168,39 @@ body {
             height: 7px;
         }
         ::-webkit-scrollbar-track {
-            background: #09090b;           /* exact site background (zinc-950) */
+            background: --color-surface;           
             border-radius: 9999px;
         }
         ::-webkit-scrollbar-thumb {
-            background: #27272a;           /* zinc-800 */
+            background: --color-surface-hover;           
             border-radius: 9999px;
-            border: 1px solid #18181b;
+            border: 1px solid --color-border;
         }
         ::-webkit-scrollbar-thumb:hover {
-            background: #FF4400;           /* your accent color */
+            background: --color-accent;           /* your accent color */
         }
 
         /* Firefox */
         html {
             scrollbar-width: thin;
-            scrollbar-color: #27272a #09090b;
+            scrollbar-color: --color-primary --color-accent;
         }
 
         /* Force the same style on the desktop sidebar (extra smooth) */
         aside {
             scrollbar-width: thin;
-            scrollbar-color: #27272a #09090b;
+            scrollbar-color: --color-primary --color-accent;
         }
 
         /* If you ever add more scrollable panels later, just add class="custom-scroll" to them */
         .custom-scroll::-webkit-scrollbar-track {
-            background: #09090b;
+            background: --color-surface;
         }
         .custom-scroll::-webkit-scrollbar-thumb {
-            background: #27272a;
+            background: --color-surface-hover;
         }
         .custom-scroll::-webkit-scrollbar-thumb:hover {
-            background: #FF4400;
+            background: --color-primary;
         }
 
 
