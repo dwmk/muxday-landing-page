@@ -202,7 +202,7 @@ export const Gazebos = ({ initialInviteCode, onInviteHandled, initialGazeboId }:
 
   // UI State
   const [mobileView, setMobileView] = useState<'servers' | 'channels' | 'chat'>('servers');
-  const [showMembersPanel, setShowMembersPanel] = useState(true);
+  const [showMembersPanel, setShowMembersPanel] = useState(() => window.innerWidth >= 768);
   
   // Modal/Overlay States
   const [showSettingsModal, setShowSettingsModal] = useState(false);
