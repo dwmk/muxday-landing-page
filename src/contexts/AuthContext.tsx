@@ -12,6 +12,7 @@ type AuthContextType = {
   signOut: () => Promise<void>;
   updateProfile: (newProfile: Profile) => void;
   signInWithDiscord: () => Promise<void>;
+  signInWithGoogle: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -77,6 +78,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   if (error) throw error;
 };
 
+const signInWithGoogle = async () => {
+  const { error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      redirectTo: `${window.location.origin}/app`, // ← already correct for muxday.com/app
+    },
+  });
+  if (error) throw error;
+};
+
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -123,7 +134,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, profile, loading, signUp, signIn, signOut, updateProfile, signInWithDiscord }}>
+    <AuthContext.Provider value={{ user, profile, loading, signUp, signIn, signOut, updateProfile, signInWithDiscord, signInWithGoogle }}>
       {children}
     </AuthContext.Provider>
   );

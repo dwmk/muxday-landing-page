@@ -47,6 +47,26 @@ const DiscordButton = ({ onClick, isLoading, label }: { onClick: () => void, isL
   </motion.button>
 );
 
+// Reusable Google Button
+const GoogleButton = ({ onClick, isLoading, label }: { onClick: () => void, isLoading: boolean, label: string }) => (
+  <motion.button
+    type="button"
+    onClick={onClick}
+    disabled={isLoading}
+    whileHover={{ scale: 1.03 }}
+    whileTap={{ scale: 0.97 }}
+    className="w-full bg-white hover:bg-gray-50 border-2 border-gray-300 text-gray-900 py-5 rounded-3xl font-bold text-xl shadow-xl flex items-center justify-center gap-4 transition-all disabled:opacity-70"
+  >
+    <svg className="w-8 h-8" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+      <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.51h5.92c-.25 1.36-.98 2.52-2.1 3.3v2.62h3.39c1.98-1.82 3.12-4.5 3.12-7.18z" fill="#4285F4"/>
+      <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.39-2.62c-.94.63-2.14 1-3.89 1-2.98 0-5.5-2.02-6.4-4.73H1.18v2.97C3.07 20.8 6.5 23 12 23z" fill="#34A853"/>
+      <path d="M5.84 14.6c-.23-.69-.36-1.42-.36-2.2s.13-1.51.36-2.2H1.18C.7 10.4 0 11.67 0 13c0 1.33.7 2.6 1.18 3.4l3.66-2.8z" fill="#FBBC05"/>
+      <path d="M12 5.38c1.62 0 3.06.56 4.21 1.66l3.15-3.15C17.45 1.53 14.97 0 12 0 7.5 0 3.07 2.2 1.18 5.6l3.66 2.8c.9-2.71 3.42-4.73 6.16-4.73z" fill="#EA4335"/>
+    </svg>
+    {isLoading ? 'Connecting...' : label}
+  </motion.button>
+);
+
 export const Auth = () => {
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState('');
@@ -57,7 +77,7 @@ export const Auth = () => {
   const [success, setSuccess] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  const { signUp, signIn, signInWithDiscord } = useAuth();
+  const { signUp, signIn, signInWithDiscord, signInWithGoogle } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalTitle, setModalTitle] = useState('');
   const [modalSlug, setModalSlug] = useState('');
@@ -87,6 +107,17 @@ export const Auth = () => {
       setIsLoading(false);
     }
   };
+
+  const handleGoogleLogin = async () => {
+  setError('');
+  setIsLoading(true);
+  try {
+    await signInWithGoogle();
+  } catch (err: any) {
+    setError(err.message || 'Failed to connect to Google');
+    setIsLoading(false);
+  }
+};
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -239,7 +270,10 @@ export const Auth = () => {
                       <button type="button" onClick={() => openModal('Privacy', 'privacy-policy')} className="text-red-600 hover:underline">Privacy</button>
                     </p>
                   </div>
-                  <DiscordButton onClick={handleDiscordLogin} isLoading={isLoading} label="Register with Discord" />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <DiscordButton onClick={handleDiscordLogin} isLoading={isLoading} label="Register with Discord" />
+                    <GoogleButton onClick={handleGoogleLogin} isLoading={isLoading} label="Register with Google" />
+                  </div>
                 </div>
               ) : (
                 <div className="space-y-6">
@@ -273,7 +307,11 @@ export const Auth = () => {
                     <div className="relative flex justify-center text-sm"><span className="px-4 bg-white text-gray-400 font-bold">OR</span></div>
                   </div>
 
-                  <DiscordButton onClick={handleDiscordLogin} isLoading={isLoading} label="Sign in with Discord" />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <DiscordButton onClick={handleDiscordLogin} isLoading={isLoading} label="Sign in with Discord" />
+                    <GoogleButton onClick={handleGoogleLogin} isLoading={isLoading} label="Sign in with Google" />
+                  </div>
+                 
                 </div>
               )}
 
@@ -324,7 +362,10 @@ export const Auth = () => {
                   By joining you agree to our{' '}
                   <button type="button" onClick={() => openModal('Terms', 'terms-of-service')} className="text-red-600 underline">Terms</button>
                 </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <DiscordButton onClick={handleDiscordLogin} isLoading={isLoading} label="Join via Discord" />
+                <GoogleButton onClick={handleGoogleLogin} isLoading={isLoading} label="Join via Google" />
+                </div>
               </div>
             ) : (
               <div className="space-y-4">
@@ -332,7 +373,10 @@ export const Auth = () => {
                 <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} required className="w-full px-6 py-4 border border-orange-200 rounded-3xl text-lg" />
                 <button type="submit" className="w-full py-5 bg-gradient-to-r from-red-600 to-orange-600 text-white font-bold text-xl rounded-3xl">Enter MuxDay</button>
                 <div className="text-center text-gray-400 font-bold text-xs py-2">OR</div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <DiscordButton onClick={handleDiscordLogin} isLoading={isLoading} label="Discord Sign-in" />
+                <GoogleButton onClick={handleGoogleLogin} isLoading={isLoading} label="Google Sign-in" />
+                </div> 
               </div>
             )}
             {error && <div className="text-red-600 text-xs text-center font-bold">{error}</div>}
