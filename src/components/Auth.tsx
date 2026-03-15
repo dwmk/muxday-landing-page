@@ -57,12 +57,12 @@ const GoogleButton = ({ onClick, isLoading, label }: { onClick: () => void, isLo
     whileTap={{ scale: 0.97 }}
     className="w-full bg-white hover:bg-gray-50 border-2 border-gray-300 text-gray-900 py-5 rounded-3xl font-bold text-xl shadow-xl flex items-center justify-center gap-4 transition-all disabled:opacity-70"
   >
-    <svg className="w-8 h-8" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-      <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.51h5.92c-.25 1.36-.98 2.52-2.1 3.3v2.62h3.39c1.98-1.82 3.12-4.5 3.12-7.18z" fill="#4285F4"/>
-      <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.39-2.62c-.94.63-2.14 1-3.89 1-2.98 0-5.5-2.02-6.4-4.73H1.18v2.97C3.07 20.8 6.5 23 12 23z" fill="#34A853"/>
-      <path d="M5.84 14.6c-.23-.69-.36-1.42-.36-2.2s.13-1.51.36-2.2H1.18C.7 10.4 0 11.67 0 13c0 1.33.7 2.6 1.18 3.4l3.66-2.8z" fill="#FBBC05"/>
-      <path d="M12 5.38c1.62 0 3.06.56 4.21 1.66l3.15-3.15C17.45 1.53 14.97 0 12 0 7.5 0 3.07 2.2 1.18 5.6l3.66 2.8c.9-2.71 3.42-4.73 6.16-4.73z" fill="#EA4335"/>
-    </svg>
+<svg className="w-8 h-8" viewBox="-3 0 262 262" xmlns="http://www.w3.org/2000/svg">
+  <path d="M255.878,133.451 C255.878,122.717 255.007,114.884 253.122,106.761 L130.55,106.761 L130.55,155.209 L202.497,155.209 C201.047,167.249 193.214,185.381 175.807,197.565 L175.563,199.187 L214.318,229.21 L217.003,229.478 C241.662,206.704 255.878,173.196 255.878,133.451" fill="#4285F4" />
+  <path d="M130.55,261.1 C165.798,261.1 195.389,249.495 217.003,229.478 L175.807,197.565 C164.783,205.253 149.987,210.62 130.55,210.62 C96.027,210.62 66.726,187.847 56.281,156.37 L54.75,156.5 L14.452,187.687 L13.925,189.152 C35.393,231.798 79.49,261.1 130.55,261.1" fill="#34A853" />
+  <path d="M56.281,156.37 C53.525,148.247 51.93,139.543 51.93,130.55 C51.93,121.556 53.525,112.853 56.136,104.73 L56.063,103 L15.26,71.312 L13.925,71.947 C5.077,89.644 0,109.517 0,130.55 C0,151.583 5.077,171.455 13.925,189.152 L56.281,156.37" fill="#FBBC05" />
+  <path d="M130.55,50.479 C155.064,50.479 171.6,61.068 181.029,69.917 L217.873,33.943 C195.245,12.91 165.798,0 130.55,0 C79.49,0 35.393,29.301 13.925,71.947 L56.136,104.73 C66.726,73.253 96.027,50.479 130.55,50.479" fill="#EA4335" />
+</svg>
     {isLoading ? 'Connecting...' : label}
   </motion.button>
 );
@@ -263,7 +263,7 @@ export const Auth = () => {
               {isSignUp ? (
                 <div className="space-y-8">
                   <div className="text-center space-y-2">
-                    <p className="text-gray-600 font-medium">Create your account with Discord</p>
+                    <p className="text-gray-600 font-medium">Create your account with Discord or Gmail</p>
                     <p className="text-xs text-gray-400 px-4">
                       By joining you agree to our{' '}
                       <button type="button" onClick={() => openModal('Terms', 'terms-of-service')} className="text-red-600 hover:underline">Terms</button> and{' '}
