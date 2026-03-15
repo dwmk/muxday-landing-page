@@ -271,8 +271,8 @@ export const Auth = () => {
                     </p>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <DiscordButton onClick={handleDiscordLogin} isLoading={isLoading} label="Register with Discord" />
-                    <GoogleButton onClick={handleGoogleLogin} isLoading={isLoading} label="Register with Google" />
+                    <DiscordButton onClick={handleDiscordLogin} isLoading={isLoading} label="Sign-in" />
+                    <GoogleButton onClick={handleGoogleLogin} isLoading={isLoading} label="Sign-in" />
                   </div>
                 </div>
               ) : (
@@ -308,8 +308,8 @@ export const Auth = () => {
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <DiscordButton onClick={handleDiscordLogin} isLoading={isLoading} label="Sign in with Discord" />
-                    <GoogleButton onClick={handleGoogleLogin} isLoading={isLoading} label="Sign in with Google" />
+                    <DiscordButton onClick={handleDiscordLogin} isLoading={isLoading} label="Sign-in" />
+                    <GoogleButton onClick={handleGoogleLogin} isLoading={isLoading} label="Sign-in" />
                   </div>
                  
                 </div>
