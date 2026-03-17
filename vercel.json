@@ -1,25 +1,18 @@
 {
   "rewrites": [
-    // ──────────────────────────────────────────────
-    //  A. Serve landing page when root is requested
-    // ──────────────────────────────────────────────
+    // 1. Root → landing (highest priority)
     {
       "source": "/",
       "destination": "/landing.html"
     },
 
-    // ──────────────────────────────────────────────
-    //  B. Serve static .html files directly if they exist
-    //     (terms-of-service.html, privacy-policy.html, etc.)
-    // ──────────────────────────────────────────────
+    // 2. Any real .html file (future: terms-of-service.html, etc.)
     {
       "source": "/:path*.html",
       "destination": "/:path*.html"
     },
 
-    // ──────────────────────────────────────────────
-    //  C. Protect known API / static asset paths
-    // ──────────────────────────────────────────────
+    // 3. Protect build artifacts & static assets
     {
       "source": "/src/:path*",
       "destination": "/src/:path*"
@@ -33,12 +26,10 @@
       "destination": "/vite.svg"
     },
 
-    // ──────────────────────────────────────────────
-    //  D. Everything else → send to client-side app
-    //     (this includes /app/*, /username, /invite/xxx, etc.)
-    // ──────────────────────────────────────────────
+    // 4. VERY IMPORTANT – negative lookahead to exclude paths that should NOT go to SPA
+    //    (add more patterns here later if you create API routes, /admin, etc.)
     {
-      "source": "/:path*",
+      "source": "/((?!src|assets|vite\\.svg|\\w+\\.html$).*)",
       "destination": "/index.html"
     }
   ]
