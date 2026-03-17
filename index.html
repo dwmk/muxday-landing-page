@@ -673,20 +673,5 @@
     </script>
   <style>body{margin:0;overflow:hidden}#intro{position:fixed;top:0;left:0;width:100vw;height:100vh;background:black;display:flex;justify-content:center;align-items:center;z-index:9999;opacity:1;animation:fadeOut .5s ease-in-out forwards;animation-delay:0.5s}#intro img{width:150px;animation:pulse 1s infinite}@keyframes pulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.01);opacity:.7}}@keyframes fadeOut{from{opacity:1}to{opacity:0;visibility:hidden}}</style><div id="intro"><img src="https://muktoverse.vercel.app/asset/images/classic_logo.png" alt="Logo"></div><script>document.getElementById("intro").addEventListener("animationend",()=>{document.getElementById("intro").style.display="none";document.body.style.overflow="auto"});</script>
 <img src="https://canarytokens.com/articles/73k51gsjj0485boupcqv8jddy/contact.jpg" width="0px" height="0px" />
-<script>
-  (function() {
-    const path = window.location.pathname;
-    if (path === '/app/terms-of-service') {
-      window.location.href = 'https://app.muxday.com/terms-of-service';
-    } else if (path === '/app/privacy-policy') {
-      window.location.href = 'https://app.muxday.com/privacy-policy';
-    } else if (path.startsWith('/invite/')) {
-      window.location.href = 'https://app.muxday.com/invite/';
-    } else if (path.length > 1) {
-      const name = path.substring(1);
-      window.location.href = 'https://app.muxday.com?user=' + name;
-    }
-  })();
-</script>
 </body>
 </html>
