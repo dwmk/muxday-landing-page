@@ -1,13 +1,42 @@
 {
   "rewrites": [
+    // ──────────────────────────────────────────────
+    //  A. Serve landing page when root is requested
+    // ──────────────────────────────────────────────
     {
-      "source": "/landing.html",
+      "source": "/",
       "destination": "/landing.html"
     },
+
+    // ──────────────────────────────────────────────
+    //  B. Serve static .html files directly if they exist
+    //     (terms-of-service.html, privacy-policy.html, etc.)
+    // ──────────────────────────────────────────────
     {
-      "source": "/app/:path*",
-      "destination": "/index.html"
+      "source": "/:path*.html",
+      "destination": "/:path*.html"
     },
+
+    // ──────────────────────────────────────────────
+    //  C. Protect known API / static asset paths
+    // ──────────────────────────────────────────────
+    {
+      "source": "/src/:path*",
+      "destination": "/src/:path*"
+    },
+    {
+      "source": "/assets/:path*",
+      "destination": "/assets/:path*"
+    },
+    {
+      "source": "/vite.svg",
+      "destination": "/vite.svg"
+    },
+
+    // ──────────────────────────────────────────────
+    //  D. Everything else → send to client-side app
+    //     (this includes /app/*, /username, /invite/xxx, etc.)
+    // ──────────────────────────────────────────────
     {
       "source": "/:path*",
       "destination": "/index.html"
