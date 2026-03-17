@@ -1,0 +1,1 @@
+export default function BuildPage() { return <div>Build Trigger</div>; }
