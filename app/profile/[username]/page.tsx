@@ -4,7 +4,7 @@ import { notFound } from 'next/navigation';
 export async function generateMetadata({
   params,
 }: {
-  params: { username: string; rest?: string[] };
+  params: { username: string };
 }) {
   const profile = await getProfile(params.username);
   if (!profile) {
@@ -34,7 +34,7 @@ export async function generateMetadata({
 export default async function ProfileEmbedPage({
   params,
 }: {
-  params: { username: string; rest?: string[] };
+  params: { username: string };
 }) {
   const profile = await getProfile(params.username);
   if (!profile) notFound();
@@ -59,12 +59,7 @@ export default async function ProfileEmbedPage({
           <img
             src={profile.banner_url}
             alt="Banner"
-            style={{
-              width: '100%',
-              height: '300px',
-              objectFit: 'cover',
-              borderRadius: '12px',
-            }}
+            style={{ width: '100%', height: '300px', objectFit: 'cover', borderRadius: '12px' }}
           />
         )}
 
@@ -72,12 +67,7 @@ export default async function ProfileEmbedPage({
           <img
             src={profile.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.display_name)}&size=200`}
             alt="Avatar"
-            style={{
-              width: '180px',
-              height: '180px',
-              borderRadius: '9999px',
-              border: '8px solid #0a0a0a',
-            }}
+            style={{ width: '180px', height: '180px', borderRadius: '9999px', border: '8px solid #0a0a0a' }}
           />
         </div>
 
@@ -93,15 +83,7 @@ export default async function ProfileEmbedPage({
           {profile.bio || 'No bio yet.'}
         </p>
 
-        <div
-          style={{
-            display: 'flex',
-            gap: '30px',
-            justifyContent: 'center',
-            fontSize: '1.2rem',
-            marginBottom: '40px',
-          }}
-        >
+        <div style={{ display: 'flex', gap: '30px', justifyContent: 'center', fontSize: '1.2rem', marginBottom: '40px' }}>
           <div><strong>{profile.followers}</strong> Followers</div>
           <div><strong>{profile.following}</strong> Following</div>
         </div>
@@ -127,7 +109,6 @@ export default async function ProfileEmbedPage({
         </p>
       </div>
 
-      {/* Auto-redirect for humans (bots ignore JS) */}
       <script
         dangerouslySetInnerHTML={{
           __html: `

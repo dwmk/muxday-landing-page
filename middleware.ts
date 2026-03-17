@@ -10,8 +10,8 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // 2. REWRITE for dynamic embeds: /@username or /@username/anything
-  //    → internal /profile/username (serves meta tags + OG image)
+    // 2. REWRITE for dynamic embeds: /@username or /@username/ANYTHING
+  //    → always shows the profile embed (ignores extra path for simplicity)
   if (pathname.startsWith('/@')) {
     const parts = pathname.split('/');
     const userSegment = parts[1];
@@ -19,13 +19,12 @@ export function middleware(request: NextRequest) {
       return NextResponse.next();
     }
     const username = userSegment.substring(1);
-    const rest = parts.slice(2).join('/');
 
-    const internalPath = `/profile/${username}${rest ? `/${rest}` : ''}`;
+    const internalPath = `/profile/${username}`;
 
     const url = request.nextUrl.clone();
     url.pathname = internalPath;
-    url.search = request.nextUrl.search; // preserve query params
+    url.search = request.nextUrl.search;
 
     return NextResponse.rewrite(url);
   }
