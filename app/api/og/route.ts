@@ -19,42 +19,102 @@ export async function GET(request: NextRequest) {
 
   return new ImageResponse(
     (
-      <div tw="flex flex-col w-full h-full bg-zinc-950 text-white">
+      <div
+        style={{
+          width: '1200px',
+          height: '630px',
+          display: 'flex',
+          flexDirection: 'column',
+          backgroundColor: '#18181b',
+          color: '#fff',
+          fontFamily: 'system-ui, sans-serif',
+        }}
+      >
         {/* Banner */}
-        <div tw="relative w-full h-[400px] bg-zinc-800">
+        <div
+          style={{
+            position: 'relative',
+            width: '100%',
+            height: '400px',
+            backgroundColor: '#27272a',
+            overflow: 'hidden',
+          }}
+        >
           {bannerUrl && (
             <img
               src={bannerUrl}
-              tw="w-full h-full object-cover"
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+              }}
               alt="Banner"
             />
           )}
         </div>
 
         {/* Avatar */}
-        <div tw="absolute top-[280px] left-[50px] border-[8px] border-zinc-950 rounded-full overflow-hidden">
+        <div
+          style={{
+            position: 'absolute',
+            top: '280px',
+            left: '50px',
+            border: '8px solid #18181b',
+            borderRadius: '9999px',
+            overflow: 'hidden',
+          }}
+        >
           <img
             src={avatarUrl}
             width="200"
             height="200"
-            tw="rounded-full"
+            style={{ borderRadius: '9999px' }}
             alt="Avatar"
           />
         </div>
 
         {/* Content */}
-        <div tw="mt-[180px] px-12 flex flex-col">
-          <div tw="flex items-center gap-4">
-            <h1 tw="text-6xl m-0">{profile.display_name}</h1>
-            {profile.verified && <span tw="text-4xl">✅</span>}
+        <div
+          style={{
+            marginTop: '180px',
+            padding: '0 48px',
+            display: 'flex',
+            flexDirection: 'column',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <h1 style={{ fontSize: '60px', margin: 0 }}>{profile.display_name}</h1>
+            {profile.verified && <span style={{ fontSize: '48px' }}>✅</span>}
           </div>
-          <p tw="text-4xl mt-2 text-zinc-400">@{profile.username}</p>
+          <p
+            style={{
+              fontSize: '40px',
+              marginTop: '8px',
+              color: '#a1a1aa',
+            }}
+          >
+            @{profile.username}
+          </p>
 
-          <p tw="text-3xl mt-6 max-w-[700px]">
+          <p
+            style={{
+              fontSize: '30px',
+              marginTop: '48px',
+              maxWidth: '700px',
+              lineHeight: '1.3',
+            }}
+          >
             {profile.bio || 'No bio provided yet.'}
           </p>
 
-          <div tw="flex gap-10 text-4xl mt-8">
+          <div
+            style={{
+              display: 'flex',
+              gap: '60px',
+              marginTop: '64px',
+              fontSize: '36px',
+            }}
+          >
             <div>
               <strong>{profile.followers}</strong> Followers
             </div>
