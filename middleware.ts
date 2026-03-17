@@ -5,20 +5,26 @@ export function middleware(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
   const destinationBase = 'https://app.muxday.com';
 
-  // 1. Root path: Serves public/index.html automatically
+  // 1. Root: Serves public/index.html (Next.js does this automatically if return next())
   if (pathname === '/') {
     return NextResponse.next();
   }
 
-  // 2. /@VAR/... -> https://app.muxday.com?user=VAR/...
+  // 2. /@VAR/... -> https://app.muxday.com?user=VAR&...
   if (pathname.startsWith('/@')) {
     const parts = pathname.split('/');
     const user = parts[1].substring(1);
     const rest = parts.slice(2).join('/');
-    const newPath = rest ? `/${rest}` : '';
-    return NextResponse.redirect(
-      new URL(`${newPath}?user=${user}${search ? `&${search.slice(1)}` : ''}`, destinationBase)
-    );
+    
+    const redirectUrl = new URL(rest ? `/${rest}` : '/', destinationBase);
+    redirectUrl.searchParams.set('user', user);
+    
+    // Preserve existing query params
+    request.nextUrl.searchParams.forEach((value, key) => {
+      redirectUrl.searchParams.set(key, value);
+    });
+
+    return NextResponse.redirect(redirectUrl);
   }
 
   // 3. /app/VAR/... -> https://app.muxday.com/VAR/...
@@ -27,13 +33,19 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL(`${newPath}${search}`, destinationBase));
   }
 
-  // 4. Default: Check if file exists in /public, otherwise redirect to destination
-  // This handles the /url/url/... requirement
+  // 4. Default: Redirect everything else to the app domain
+  // (Ignoring internal Next.js paths which are handled by the matcher)
   return NextResponse.redirect(new URL(`${pathname}${search}`, destinationBase));
 }
 
 export const config = {
   matcher: [
-    '/((?!api|_next/static|_next/image|favicon.ico).*)',
+    /*
+     * Match all paths EXCEPT:
+     * - api routes
+     * - _next/static & _next/image (Next.js internals)
+     * - public files with extensions (e.g., favicon.ico, logo.png)
+     */
+    '/((?!api|_next/static|_next/image|favicon.ico|.*\\..*).*)',
   ],
 };
