@@ -10,20 +10,24 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // 2. Redirect Case: /@VAR/... -> https://app.muxday.com?user=VAR&...
+  // 2. REWRITE for dynamic embeds: /@username or /@username/anything
+  //    → internal /profile/username (serves meta tags + OG image)
   if (pathname.startsWith('/@')) {
     const parts = pathname.split('/');
-    const user = parts[1].substring(1);
+    const userSegment = parts[1];
+    if (!userSegment?.startsWith('@')) {
+      return NextResponse.next();
+    }
+    const username = userSegment.substring(1);
     const rest = parts.slice(2).join('/');
-    
-    const redirectUrl = new URL(rest ? `/${rest}` : '/', destinationBase);
-    redirectUrl.searchParams.set('user', user);
-    
-    request.nextUrl.searchParams.forEach((value, key) => {
-      redirectUrl.searchParams.set(key, value);
-    });
 
-    return NextResponse.redirect(redirectUrl);
+    const internalPath = `/profile/${username}${rest ? `/${rest}` : ''}`;
+
+    const url = request.nextUrl.clone();
+    url.pathname = internalPath;
+    url.search = request.nextUrl.search; // preserve query params
+
+    return NextResponse.rewrite(url);
   }
 
   // 3. Redirect Case: /invite/... -> https://app.muxday.com/invite/...
