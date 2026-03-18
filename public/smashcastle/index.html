@@ -20,7 +20,6 @@
         #ui-layer { position: absolute; inset: 0; pointer-events: none; z-index: 10; }
         #ui-layer * { pointer-events: auto; }
 
-        /* Menu Styles */
         #menu {
             position: absolute; inset: 0; background: radial-gradient(circle, #1a1a2e 0%, #000 100%);
             display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100;
@@ -33,7 +32,6 @@
         }
         .btn:active { transform: translateY(3px); box-shadow: 0 1px 0 #b38f00; }
 
-        /* Chat Styles (Roblox-like) */
         #chat-container {
             position: absolute; top: 10px; left: 10px; width: 300px;
             background: rgba(0,0,0,0.3); border-radius: 5px; overflow: hidden;
@@ -47,7 +45,6 @@
             padding: 8px; box-sizing: border-box; outline: none;
         }
 
-        /* Game Overlays */
         #turn-overlay {
             position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%);
             background: var(--panel); padding: 20px; border-radius: 15px;
@@ -75,8 +72,8 @@
         }
 
         canvas { display: block; image-rendering: pixelated; }
-        
         .status-msg { color: var(--primary); font-weight: bold; margin-bottom: 10px; }
+        .audience-tag { color: #888; font-size: 0.8em; margin-left: 5px; }
     </style>
 </head>
 <body>
@@ -90,7 +87,6 @@
         <h1 style="font-size: 4rem; margin-bottom: 10px; color: var(--primary);">SMASH CASTLE</h1>
         <p id="connection-status">Ready to Play</p>
         <div id="menu-buttons">
-            <button class="btn" onclick="startGame('practice')">PRACTICE</button>
             <button class="btn" onclick="startGame('host')">HOST GAME</button>
         </div>
     </div>
@@ -101,19 +97,16 @@
             <input type="text" id="chat-input" placeholder="Press Enter to chat..." maxlength="100">
         </div>
 
-        <!-- HOST CONTROLS -->
         <div id="host-controls" style="display: none; position: absolute; top: 10px; right: 10px;">
             <h3 style="margin: 0 0 10px 0; color: var(--primary);">HOST CONTROLS</h3>
             <p id="player-count">Players: 1</p>
             <button class="btn" onclick="startMatch()">START MATCH</button>
         </div>
 
-        <!-- CURRENT TURN PANEL (visible to ALL) -->
         <div id="current-turn-panel" style="display: none; position: absolute; top: 70px; left: 50%; transform: translateX(-50%);">
             CURRENT TURN: <span id="current-player-name" style="color: var(--primary); font-weight: bold;"></span>
         </div>
 
-        <!-- PLAYER LIST / CROWNS -->
         <div id="player-list" style="display: none; position: absolute; top: 10px; right: 340px; width: 220px; max-height: 300px; overflow-y: auto;">
             <h3 style="margin: 0 0 10px 0; color: var(--primary);">👑 CROWNS</h3>
             <div id="player-list-content"></div>
@@ -125,45 +118,29 @@
                 <button class="btn" id="btn-end-turn">END TURN</button>
             </div>
         </div>
-        
-        <div id="mobile-controls">
-            <button class="btn" style="padding: 20px;" onclick="handleInput({key: 'ArrowUp'})">▲</button><br>
-            <button class="btn" style="padding: 20px;" onclick="handleInput({key: 'ArrowLeft'})">◀</button>
-            <button class="btn" style="padding: 20px;" onclick="handleInput({key: 'ArrowRight'})">▶</button><br>
-            <button class="btn" style="padding: 20px;" onclick="handleInput({key: 'ArrowDown'})">▼</button>
-        </div>
     </div>
 
-    <!-- RULES MODAL -->
     <div id="rules-modal">
         <h1 style="color: var(--primary); margin-bottom: 20px;">SMASH CASTLE RULES</h1>
         <div style="max-width: 520px; line-height: 1.6; font-size: 1.1rem;">
-            <p><strong>Pre-Match:</strong> Everyone moves freely on the grid. Host decides when to START MATCH.</p>
-            <p><strong>Turns (cycle by join order):</strong></p>
-            <ul style="text-align: left; margin: 10px 0;">
-                <li>First: Choose a tile to HIDE your crown underneath.</li>
-                <li>Then: Strike 1–3 tiles.</li>
-            </ul>
-            <p>A tile breaks after 2 strikes total. If a crown is underneath → it is stolen! Chat announces: “Player X’s crown has been stolen!” (stealer hidden for mystery).</p>
-            <p>You can have MULTIPLE crowns. On your turn you reposition/hide ONE crown. If you have 0 crowns at the start of your turn, you MUST use all 3 strikes to steal one (RECLAIM MODE). If you still have 0 after your turn → eliminated to audience.</p>
-            <p>When unbroken tiles ≤ (players × 3 + 1) → everyone teleports to a smaller new map with fresh crowns (1 per survivor).</p>
-            <p>During anyone’s turn, others are teleported to a tiny 3×3 safe zone (audience view).</p>
-            <p>Last player standing with crowns WINS!</p>
+            <p><strong>Pre-Match:</strong> Everyone moves freely. Host decides when to START.</p>
+            <p><strong>Crowns:</strong> If a tile is broken and a crown is there, it's stolen!</p>
+            <p><strong>Audience:</strong> Late joiners watch and wait.</p>
         </div>
-        <button class="btn" onclick="hideRulesModal()" style="margin-top: 30px;">I UNDERSTAND — LET’S SMASH!</button>
+        <button class="btn" onclick="hideRulesModal()" style="margin-top: 30px;">LET’S SMASH!</button>
     </div>
 
     <canvas id="gameCanvas"></canvas>
 
     <script>
-        // --- CONFIG & GLOBALS ---
+// --- CONFIG & GLOBALS ---
 const TILE_SIZE = 64;
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 let peer, conn;
 let isHost = false;
 let gameActive = false;
-let myId = null; // Start as null to prevent race conditions
+let myId = null;
 let myName = '';
 let myColor = '';
 let players = {}; 
@@ -175,110 +152,64 @@ let turnSubPhase = 'idle';
 let strikesRemaining = 3;
 let lastPlaced = null;
 let playerCrownCounts = {};
-let crownLocations = {}; // Host-only secret
+let crownLocations = {}; // Stores key: "x,y", value: ownerId
 let slimes = {};
 
-// --- PHYSICS: Jiggle Slime ---
+// --- SLIME RENDERING ---
 class Slime {
     constructor(color) {
         this.color = color;
         this.points = [];
-        this.numPoints = 10;
         this.radius = 22;
         this.wobble = 0;
-        for(let i=0; i<this.numPoints; i++) {
-            const angle = (i / this.numPoints) * Math.PI * 2;
-            this.points.push({
-                x: Math.cos(angle) * this.radius,
-                y: Math.sin(angle) * this.radius,
-                ox: Math.cos(angle) * this.radius,
-                oy: Math.sin(angle) * this.radius,
-                vx: 0, vy: 0
-            });
+        for(let i=0; i<10; i++) {
+            const a = (i/10) * Math.PI * 2;
+            this.points.push({x: Math.cos(a)*22, y: Math.sin(a)*22, ox: Math.cos(a)*22, oy: Math.sin(a)*22, vx:0, vy:0});
         }
     }
-
-    update(isMoving) {
+    update() {
         this.wobble += 0.1;
-        const stretch = Math.sin(this.wobble) * 2;
         this.points.forEach((p, i) => {
-            const noise = (Math.random() - 0.5) * 0.8;
-            const dx = p.ox - p.x;
-            const dy = (p.oy + (i > 5 ? stretch : -stretch)) - p.y;
-            p.vx += dx * 0.15 + noise;
-            p.vy += dy * 0.15 + noise;
-            p.x += p.vx; p.y += p.vy;
-            p.vx *= 0.75; p.vy *= 0.75;
+            const dy = (p.oy + (i > 5 ? Math.sin(this.wobble)*2 : -Math.sin(this.wobble)*2)) - p.y;
+            p.vy += dy * 0.15; p.y += p.vy; p.vy *= 0.75;
         });
     }
-
-    draw(ctx, x, y, name, isLocal) {
+    draw(ctx, x, y, name, isLocal, isAudience) {
         ctx.beginPath();
-        ctx.moveTo(x + this.points[0].x, y + this.points[0].y);
-        for(let i=1; i<=this.numPoints; i++) {
-            const p = this.points[i % this.numPoints];
-            const prev = this.points[i-1];
-            const xc = (x + prev.x + x + p.x) / 2;
-            const yc = (y + prev.y + y + p.y) / 2;
-            ctx.quadraticCurveTo(x + prev.x, y + prev.y, xc, yc);
-        }
-        ctx.fillStyle = this.color;
-        ctx.fill();
-        ctx.strokeStyle = 'white';
-        ctx.lineWidth = 3;
-        ctx.stroke();
-
-        // Eyes (blinking effect)
-        const blink = Math.random() > 0.98 ? 0.1 : 1;
-        ctx.fillStyle = 'white';
-        ctx.beginPath();
-        ctx.ellipse(x - 7, y - 4, 4, 5 * blink, 0, 0, Math.PI*2);
-        ctx.ellipse(x + 7, y - 4, 4, 5 * blink, 0, 0, Math.PI*2);
-        ctx.fill();
+        this.points.forEach((p, i) => {
+            if(i===0) ctx.moveTo(x+p.x, y+p.y);
+            else ctx.lineTo(x+p.x, y+p.y);
+        });
+        ctx.closePath();
+        ctx.fillStyle = this.color; ctx.fill();
+        ctx.strokeStyle = 'white'; ctx.lineWidth = 2; ctx.stroke();
         
-        ctx.fillStyle = 'white';
-        ctx.font = 'bold 14px Segoe UI';
-        ctx.textAlign = 'center';
-        ctx.shadowBlur = 4; ctx.shadowColor = 'black';
-        ctx.fillText(isLocal ? `YOU (${name})` : name, x, y - 40);
-        ctx.shadowBlur = 0;
+        ctx.fillStyle = 'white'; ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'center';
+        ctx.fillText((isLocal ? "YOU " : "") + name + (isAudience ? " (AUD)" : ""), x, y - 35);
     }
 }
 
 // --- NETWORKING ---
 function initPeer(idToJoin = null) {
     peer = new Peer();
-    
     peer.on('open', (id) => {
         myId = id;
-        if(idToJoin) {
-            connectToHost(idToJoin);
-        } else {
-            // Host setup
-            players[myId] = {
-                id: myId, name: myName, x: 2, y: 2, 
-                color: myColor, isAudience: false
-            };
-            const fullUrl = `${window.location.origin}${window.location.pathname}?join=${id}`;
-            document.getElementById('connection-status').innerHTML = 
-                `ID: <strong>${id}</strong> | <a href="${fullUrl}" target="_blank" style="color:var(--primary)">INVITE LINK</a>`;
-            window.history.replaceState({}, '', `?join=${id}`);
+        if(idToJoin) connectToHost(idToJoin);
+        else {
+            players[myId] = { id, name: myName, x: 2, y: 2, color: myColor, isAudience: false };
             gameActive = true;
             loop();
+            const url = `${window.location.origin}${window.location.pathname}?join=${id}`;
+            document.getElementById('connection-status').innerHTML = `ID: ${id} | <a href="${url}" target="_blank">INVITE LINK</a>`;
         }
     });
-
-    peer.on('connection', (c) => {
-        if(!isHost) return;
-        c.on('open', () => setupHostEvents(c));
-    });
+    peer.on('connection', (c) => { if(isHost) c.on('open', () => setupHostEvents(c)); });
 }
 
 function connectToHost(hostId) {
     conn = peer.connect(hostId);
     conn.on('open', () => {
         isHost = false;
-        addChat("System", "Connected! Sending join request...");
         sendNet({type: 'join-request', name: myName, color: myColor});
         gameActive = true;
         loop();
@@ -291,79 +222,59 @@ function setupHostEvents(connection) {
 }
 
 function sendNet(data) {
-    if(isHost) {
-        Object.values(players).forEach(p => { if(p.conn) p.conn.send(data); });
-    } else if(conn && conn.open) {
-        conn.send(data);
-    }
+    if(isHost) Object.values(players).forEach(p => p.conn?.send(data));
+    else if(conn?.open) conn.send(data);
 }
 
 function handleNetData(data, senderConn) {
     switch(data.type) {
         case 'join-request':
             if(!isHost) return;
+            const isAud = phase === 'match';
             players[senderConn.peer] = {
-                id: senderConn.peer, name: data.name,
+                id: senderConn.peer, name: data.name, color: data.color,
                 x: Math.floor(Math.random()*gridSize), y: Math.floor(Math.random()*gridSize),
-                color: data.color, isAudience: false, conn: senderConn
+                isAudience: isAud, conn: senderConn
             };
-            addChat("System", `${data.name} joined!`);
+            addChat("System", `${data.name} joined as ${isAud ? 'Audience' : 'Player'}`);
             syncAll();
             break;
         case 'sync':
-            players = data.players;
-            grid = data.grid;
-            gridSize = data.gridSize;
-            currentTurnId = data.currentTurnId;
-            phase = data.phase;
-            playerCrownCounts = data.playerCrownCounts;
+            players = data.players; grid = data.grid; phase = data.phase;
+            currentTurnId = data.currentTurnId; playerCrownCounts = data.playerCrownCounts;
+            crownLocations = data.crownLocations;
             break;
-        case 'chat':
-            addChat(data.name, data.msg, data.color);
-            break;
-        case 'move':
-            if(players[data.id]) { players[data.id].x = data.x; players[data.id].y = data.y; }
-            break;
-        case 'show-rules':
-            document.getElementById('rules-modal').style.display = 'flex';
-            break;
+        case 'chat': addChat(data.name, data.msg, data.color); break;
+        case 'move': if(players[data.id]) { players[data.id].x = data.x; players[data.id].y = data.y; } break;
     }
 }
 
 function syncAll() {
     if(!isHost) return;
+    const pData = {};
+    Object.values(players).forEach(p => { pData[p.id] = { ...p, conn: null }; });
     sendNet({
-        type: 'sync', players: players, grid: grid,
-        gridSize: gridSize, currentTurnId: currentTurnId,
-        phase: phase, playerCrownCounts: playerCrownCounts
+        type: 'sync', players: pData, grid, phase, 
+        currentTurnId, playerCrownCounts, crownLocations
     });
 }
 
-// --- GAME ACTIONS ---
+// --- LOGIC ---
 function startGame(mode) {
-    myName = prompt("Enter Name:", "Slime_" + Math.floor(Math.random()*999)) || "Player";
-    myColor = `hsl(${Math.random()*360}, 75%, 65%)`;
-    
-    if(mode === 'host') {
-        isHost = true;
-        setupGrid(12);
-        initPeer();
-    }
+    myName = prompt("Enter Your Name:") || "Slime" + Math.floor(Math.random()*100);
+    myColor = `hsl(${Math.random()*360}, 70%, 60%)`;
+    if(mode === 'host') { isHost = true; setupGrid(12); initPeer(); }
     document.getElementById('menu').style.display = 'none';
 }
 
 function startGameJoin() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const joinId = urlParams.get('join');
-    myName = prompt("Enter Name:", "Guest") || "Guest";
-    myColor = `hsl(${Math.random()*360}, 75%, 65%)`;
-    initPeer(joinId);
-    document.getElementById('menu').style.display = 'none';
+    const id = new URLSearchParams(window.location.search).get('join');
+    startGame('client');
+    initPeer(id);
 }
 
 function setupGrid(size) {
-    gridSize = size;
-    grid = [];
+    gridSize = size; grid = [];
     for(let y=0; y<size; y++) {
         grid[y] = [];
         for(let x=0; x<size; x++) grid[y][x] = { hits: 0, destroyed: false };
@@ -373,76 +284,31 @@ function setupGrid(size) {
 function startMatch() {
     if(!isHost) return;
     phase = 'match';
-    Object.keys(players).forEach(id => {
-        players[id].isAudience = false;
-        playerCrownCounts[id] = 1;
-    });
+    Object.keys(players).forEach(id => { playerCrownCounts[id] = 1; });
     currentTurnId = myId;
     syncAll();
-    sendNet({type: 'show-rules'});
-    addChat("Game", "MATCH STARTED! Choose where to hide your crown.", "#ffcc00");
 }
 
-function handleInput(e) {
-    if(!gameActive || !myId || !players[myId]) return;
-    // Only allow free movement in prematch or if it's your turn
-    if(phase === 'match' && currentTurnId !== myId) return;
-
-    const p = players[myId];
-    let nx = p.x, ny = p.y;
-    const key = e.key ? e.key.toLowerCase() : e;
-
-    if(key === 'w' || key === 'arrowup') ny--;
-    if(key === 's' || key === 'arrowdown') ny++;
-    if(key === 'a' || key === 'arrowleft') nx--;
-    if(key === 'd' || key === 'arrowright') nx++;
-
-    if(nx >= 0 && nx < gridSize && ny >= 0 && ny < gridSize) {
-        if(!grid[ny][nx].destroyed) {
-            p.x = nx; p.y = ny;
-            sendNet({type: 'move', id: myId, x: nx, y: ny});
-        }
-    }
-}
-
-// --- RENDER LOOP ---
+// --- RENDER ---
 function loop() {
-    update();
-    draw();
-    requestAnimationFrame(loop);
+    update(); draw(); requestAnimationFrame(loop);
 }
 
 function update() {
-    const isPortrait = window.innerHeight > window.innerWidth;
-    document.getElementById('rotate-prompt').style.display = isPortrait ? 'flex' : 'none';
-
-    if(isHost && phase === 'prematch') {
-        document.getElementById('host-controls').style.display = 'block';
-        document.getElementById('player-count').innerText = `Players: ${Object.keys(players).length}`;
-    } else {
-        document.getElementById('host-controls').style.display = 'none';
-    }
-
-    // UI Updates
+    if(!players[myId]) return;
+    const me = players[myId];
+    
+    // UI visibility
+    document.getElementById('host-controls').style.display = (isHost && phase === 'prematch') ? 'block' : 'none';
+    document.getElementById('chat-input').disabled = me.isAudience;
+    document.getElementById('chat-input').placeholder = me.isAudience ? "Audience cannot chat" : "Press Enter to chat...";
+    
     if(phase === 'match') {
         document.getElementById('current-turn-panel').style.display = 'block';
-        document.getElementById('player-list').style.display = 'block';
-        if(players[currentTurnId]) {
-            document.getElementById('current-player-name').innerText = players[currentTurnId].name;
-        }
-
-        const isMyTurn = currentTurnId === myId;
-        document.getElementById('turn-overlay').style.display = isMyTurn ? 'block' : 'none';
-        
-        if(isMyTurn) {
-            const count = playerCrownCounts[myId] || 0;
-            if(turnSubPhase === 'idle') turnSubPhase = count > 0 ? 'placing' : 'striking';
-            document.getElementById('turn-instruction').innerText = 
-                turnSubPhase === 'placing' ? "STEP 1: HIDE YOUR CROWN (Click tile)" : `STEP 2: SMASH TILES (${strikesRemaining} left)`;
-        }
+        document.getElementById('current-player-name').innerText = players[currentTurnId]?.name || "...";
+        document.getElementById('turn-overlay').style.display = (currentTurnId === myId) ? 'block' : 'none';
     }
 
-    // Slime Physics
     Object.values(players).forEach(p => {
         if(!slimes[p.id]) slimes[p.id] = new Slime(p.color);
         slimes[p.id].update();
@@ -450,60 +316,80 @@ function update() {
 }
 
 function draw() {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    
-    if(!myId || !players[myId]) {
-        ctx.fillStyle = '#000';
-        ctx.fillRect(0,0,canvas.width, canvas.height);
-        return;
-    }
-
+    canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+    if(!players[myId]) return;
     const me = players[myId];
+    
+    const isWaiting = phase === 'match' && currentTurnId !== myId && !me.isAudience;
     let camX = canvas.width/2 - (me.x * TILE_SIZE);
     let camY = canvas.height/2 - (me.y * TILE_SIZE);
-
-    const isWaiting = phase === 'match' && currentTurnId !== myId;
+    
     if(isWaiting) { camX = canvas.width/2 - (1 * TILE_SIZE); camY = canvas.height/2 - (1 * TILE_SIZE); }
 
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.save();
     ctx.translate(camX, camY);
 
-    // Grid
+    // Grid Rendering
     for(let y=0; y<gridSize; y++) {
         for(let x=0; x<gridSize; x++) {
             const tile = grid[y][x];
-            ctx.fillStyle = tile.destroyed ? '#09090b' : ((x+y)%2===0 ? '#1e1e26' : '#252530');
+            const key = `${x},${y}`;
+            
+            // Base Tile Color
+            if(tile.destroyed) ctx.fillStyle = '#000';
+            else if(crownLocations[key] === myId) ctx.fillStyle = '#4a4a00'; // Hidden crown hint
+            else ctx.fillStyle = (x+y)%2===0 ? '#1e1e26' : '#252530';
+            
             ctx.fillRect(x*TILE_SIZE, y*TILE_SIZE, TILE_SIZE-2, TILE_SIZE-2);
+
+            // Damaged (Cracks)
             if(tile.hits === 1) {
                 ctx.strokeStyle = '#ff4444'; ctx.lineWidth = 2;
-                ctx.strokeRect(x*TILE_SIZE+8, y*TILE_SIZE+8, TILE_SIZE-16, TILE_SIZE-16);
+                ctx.beginPath(); ctx.moveTo(x*TILE_SIZE+10, y*TILE_SIZE+10); ctx.lineTo(x*TILE_SIZE+54, y*TILE_SIZE+54); ctx.stroke();
+            }
+
+            // Revealed Crown
+            if(tile.destroyed && crownLocations[key]) {
+                ctx.font = '30px serif'; ctx.textAlign = 'center';
+                ctx.fillText('👑', x*TILE_SIZE+32, y*TILE_SIZE+42);
             }
         }
     }
 
     // Players
     Object.values(players).forEach(p => {
-        // HIDE the active player from others during their turn for mystery
-        if(phase === 'match' && currentTurnId === p.id && myId !== p.id) return;
-        if(slimes[p.id]) {
-            slimes[p.id].draw(ctx, p.x*TILE_SIZE + 32, p.y*TILE_SIZE + 32, p.name, p.id === myId);
-        }
+        if(phase === 'match' && currentTurnId === p.id && myId !== p.id) return; // Stealth
+        slimes[p.id]?.draw(ctx, p.x*TILE_SIZE+32, p.y*TILE_SIZE+32, p.name, p.id === myId, p.isAudience);
     });
 
     ctx.restore();
-
+    
     if(isWaiting) {
-        ctx.fillStyle = 'rgba(0,0,0,0.85)';
-        ctx.fillRect(0,0,canvas.width, canvas.height);
-        ctx.fillStyle = 'white'; ctx.textAlign = 'center';
-        ctx.font = '24px Segoe UI';
-        ctx.fillText(`WAITING FOR ${players[currentTurnId]?.name.toUpperCase()}`, canvas.width/2, canvas.height/2);
+        ctx.fillStyle = 'rgba(0,0,0,0.7)'; ctx.fillRect(0,0,canvas.width,canvas.height);
+        ctx.fillStyle = 'white'; ctx.textAlign = 'center'; ctx.font = '20px sans-serif';
+        ctx.fillText("WAITING IN CELL FOR YOUR TURN...", canvas.width/2, canvas.height/2);
     }
 }
 
-// --- TURN ACTIONS ---
+// --- INPUTS ---
+function handleInput(e) {
+    if(!players[myId] || players[myId].isAudience) return;
+    if(phase === 'match' && currentTurnId !== myId) return;
+    
+    const p = players[myId];
+    let nx = p.x, ny = p.y;
+    const k = e.key.toLowerCase();
+    if(k === 'w' || k === 'arrowup') ny--;
+    if(k === 's' || k === 'arrowdown') ny++;
+    if(k === 'a' || k === 'arrowleft') nx--;
+    if(k === 'd' || k === 'arrowright') nx++;
+
+    if(nx >= 0 && nx < gridSize && ny >= 0 && ny < gridSize && !grid[ny][nx].destroyed) {
+        p.x = nx; p.y = ny;
+        sendNet({type: 'move', id: myId, x: nx, y: ny});
+    }
+}
+
 canvas.addEventListener('mousedown', (e) => {
     if(phase !== 'match' || currentTurnId !== myId) return;
     const me = players[myId];
@@ -515,59 +401,46 @@ canvas.addEventListener('mousedown', (e) => {
     if(wx < 0 || wx >= gridSize || wy < 0 || wy >= gridSize || grid[wy][wx].destroyed) return;
 
     if(turnSubPhase === 'placing') {
-        lastPlaced = {x: wx, y: wy};
+        crownLocations[`${wx},${wy}`] = myId;
         turnSubPhase = 'striking';
-        addChat("Game", "Crown hidden! Now strike.");
+        syncAll();
     } else if(turnSubPhase === 'striking' && strikesRemaining > 0) {
         grid[wy][wx].hits++;
-        if(grid[wy][wx].hits >= 2) grid[wy][wx].destroyed = true;
+        if(grid[wy][wx].hits >= 2) {
+            grid[wy][wx].destroyed = true;
+            const key = `${wx},${wy}`;
+            if(crownLocations[key]) addChat("Game", "A CROWN HAS BEEN STOLEN!");
+        }
         strikesRemaining--;
-        if(strikesRemaining <= 0) addChat("Game", "No strikes left. End your turn.");
+        syncAll();
     }
 });
 
 document.getElementById('btn-end-turn').onclick = () => {
-    if(isHost) {
-        // Basic host resolution (expand this based on your specific rules)
-        passTurn();
-    } else {
-        sendNet({type: 'turn-action', grid: grid, placedTile: lastPlaced});
-    }
-    turnSubPhase = 'idle'; strikesRemaining = 3; lastPlaced = null;
+    if(!isHost) return;
+    const ids = Object.keys(players).filter(id => !players[id].isAudience);
+    currentTurnId = ids[(ids.indexOf(currentTurnId)+1)%ids.length];
+    turnSubPhase = 'idle'; strikesRemaining = 3;
+    syncAll();
 };
 
-function passTurn() {
-    const ids = Object.keys(players).filter(id => !players[id].isAudience);
-    let idx = ids.indexOf(currentTurnId);
-    currentTurnId = ids[(idx + 1) % ids.length];
-    syncAll();
-}
-
 window.addEventListener('keydown', handleInput);
-window.startGame = startGame;
-window.startGameJoin = startGameJoin;
-window.startMatch = startMatch;
-window.hideRulesModal = () => document.getElementById('rules-modal').style.display='none';
-
-// Check for join link on load
-if(new URLSearchParams(window.location.search).get('join')) {
-    document.getElementById('menu-buttons').innerHTML = `<button class="btn" onclick="startGameJoin()">JOIN GAME</button>`;
-}
-
 const chatInput = document.getElementById('chat-input');
 chatInput.addEventListener('keypress', (e) => {
-    if(e.key === 'Enter' && chatInput.value.trim()) {
+    if(e.key === 'Enter' && chatInput.value.trim() && !players[myId].isAudience) {
         sendNet({type: 'chat', name: myName, msg: chatInput.value, color: myColor});
-        addChat(myName, chatInput.value, myColor);
-        chatInput.value = ''; chatInput.blur();
+        addChat(myName, chatInput.value, myColor); chatInput.value = '';
     }
 });
 
-function addChat(name, msg, color) {
-    const div = document.createElement('div');
-    div.innerHTML = `<span style="color:${color}">${name}:</span> ${msg}`;
-    const hist = document.getElementById('chat-history');
-    hist.appendChild(div); hist.scrollTop = hist.scrollHeight;
+function addChat(n, m, c) {
+    const d = document.createElement('div');
+    d.innerHTML = `<span style="color:${c}">${n}:</span> ${m}`;
+    const h = document.getElementById('chat-history'); h.appendChild(d); h.scrollTop = h.scrollHeight;
+}
+
+if(new URLSearchParams(window.location.search).get('join')) {
+    document.getElementById('menu-buttons').innerHTML = `<button class="btn" onclick="startGameJoin()">JOIN GAME</button>`;
 }
     </script>
 </body>
