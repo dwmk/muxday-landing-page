@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Smash Castle</title>
+    <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+    <style>
+        :root {
+            --primary: #ffcc00;
+            --bg: #0f0f13;
+            --panel: rgba(25, 25, 35, 0.85);
+        }
+
+        body, html { 
+            margin: 0; padding: 0; width: 100%; height: 100%; 
+            background: var(--bg); color: white; font-family: 'Segoe UI', Roboto, sans-serif;
+            overflow: hidden; touch-action: none;
+        }
+
+        #ui-layer { position: absolute; inset: 0; pointer-events: none; z-index: 10; }
+        #ui-layer * { pointer-events: auto; }
+
+        /* Menu Styles */
+        #menu {
+            position: absolute; inset: 0; background: radial-gradient(circle, #1a1a2e 0%, #000 100%);
+            display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100;
+        }
+
+        .btn {
+            background: var(--primary); color: black; border: none; padding: 15px 40px;
+            font-weight: bold; font-size: 1.2rem; border-radius: 8px; cursor: pointer;
+            margin: 10px; transition: transform 0.1s; box-shadow: 0 4px 0 #b38f00;
+        }
+        .btn:active { transform: translateY(3px); box-shadow: 0 1px 0 #b38f00; }
+
+        /* Chat Styles (Roblox-like) */
+        #chat-container {
+            position: absolute; top: 10px; left: 10px; width: 300px;
+            background: rgba(0,0,0,0.3); border-radius: 5px; overflow: hidden;
+        }
+        #chat-history { 
+            height: 160px; overflow-y: auto; padding: 8px; font-size: 14px; 
+            text-shadow: 1px 1px 2px black; display: flex; flex-direction: column;
+        }
+        #chat-input {
+            width: 100%; border: none; background: rgba(0,0,0,0.5); color: white;
+            padding: 8px; box-sizing: border-box; outline: none;
+        }
+
+        /* Game Overlays */
+        #turn-overlay {
+            position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%);
+            background: var(--panel); padding: 20px; border-radius: 15px;
+            border: 2px solid var(--primary); text-align: center; display: none;
+        }
+
+        #mobile-controls {
+            position: absolute; bottom: 20px; right: 20px; display: none;
+        }
+
+        #rotate-prompt {
+            position: fixed; inset: 0; background: #000; z-index: 1000;
+            display: none; flex-direction: column; align-items: center; justify-content: center;
+        }
+
+        canvas { display: block; image-rendering: pixelated; }
+        
+        .status-msg { color: var(--primary); font-weight: bold; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+
+    <div id="rotate-prompt">
+        <h2>🔄 PLEASE ROTATE TO LANDSCAPE</h2>
+        <p>Smash Castle requires a wider view!</p>
+    </div>
+
+    <div id="menu">
+        <h1 style="font-size: 4rem; margin-bottom: 10px; color: var(--primary);">SMASH CASTLE</h1>
+        <p id="connection-status">Ready to Play</p>
+        <div id="menu-buttons">
+            <button class="btn" onclick="startGame('practice')">PRACTICE</button>
+            <button class="btn" onclick="startGame('host')">HOST GAME</button>
+        </div>
+    </div>
+
+    <div id="ui-layer">
+        <div id="chat-container">
+            <div id="chat-history"></div>
+            <input type="text" id="chat-input" placeholder="Press Enter to chat..." maxlength="100">
+        </div>
+
+        <div id="turn-overlay">
+            <div id="turn-instruction" class="status-msg">YOUR TURN</div>
+            <div id="turn-actions">
+                <button class="btn" id="btn-end-turn">END TURN</button>
+            </div>
+        </div>
+        
+        <div id="mobile-controls">
+            <button class="btn" style="padding: 20px;" onclick="handleInput({key: 'ArrowUp'})">▲</button><br>
+            <button class="btn" style="padding: 20px;" onclick="handleInput({key: 'ArrowLeft'})">◀</button>
+            <button class="btn" style="padding: 20px;" onclick="handleInput({key: 'ArrowRight'})">▶</button><br>
+            <button class="btn" style="padding: 20px;" onclick="handleInput({key: 'ArrowDown'})">▼</button>
+        </div>
+    </div>
+
+    <canvas id="gameCanvas"></canvas>
+
+    <script>
+        // --- CONFIG & GLOBALS ---
+        const TILE_SIZE = 64;
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        let peer, conn;
+        let isHost = false;
+        let gameActive = false;
+        let myId = '';
+        let myName = '';
+        let players = {}; // {id: PlayerObject}
+        let grid = []; // [[{hits: 0, destroyed: false}]]
+        let gridSize = 16;
+        let currentTurnId = null;
+        let turnPhase = 'idle'; // 'idle', 'moving', 'striking'
+        let strikesRemaining = 3;
+        let crownPlaced = false;
+
+        // --- PHYSICS: Jiggle Slime ---
+        class Slime {
+            constructor(color) {
+                this.color = color;
+                this.points = [];
+                this.numPoints = 8;
+                this.radius = 20;
+                for(let i=0; i<this.numPoints; i++) {
+                    const angle = (i / this.numPoints) * Math.PI * 2;
+                    this.points.push({
+                        x: Math.cos(angle) * this.radius,
+                        y: Math.sin(angle) * this.radius,
+                        ox: Math.cos(angle) * this.radius,
+                        oy: Math.sin(angle) * this.radius,
+                        vx: 0, vy: 0
+                    });
+                }
+            }
+
+            update(isMoving) {
+                const bounce = isMoving ? 0.2 : 0.05;
+                this.points.forEach(p => {
+                    const dx = p.ox - p.x;
+                    const dy = p.oy - p.y;
+                    p.vx += dx * bounce + (Math.random() - 0.5) * 0.5;
+                    p.vy += dy * bounce + (Math.random() - 0.5) * 0.5;
+                    p.x += p.vx; p.y += p.vy;
+                    p.vx *= 0.8; p.vy *= 0.8;
+                });
+            }
+
+            draw(ctx, x, y, name) {
+                ctx.beginPath();
+                ctx.moveTo(x + this.points[0].x, y + this.points[0].y);
+                for(let i=1; i<=this.numPoints; i++) {
+                    const p = this.points[i % this.numPoints];
+                    const prev = this.points[i-1];
+                    const xc = (x + prev.x + x + p.x) / 2;
+                    const yc = (y + prev.y + y + p.y) / 2;
+                    ctx.quadraticCurveTo(x + prev.x, y + prev.y, xc, yc);
+                }
+                ctx.fillStyle = this.color;
+                ctx.fill();
+                ctx.strokeStyle = 'white';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                // Eyes
+                ctx.fillStyle = 'white';
+                ctx.beginPath();
+                ctx.arc(x - 6, y - 5, 4, 0, Math.PI*2);
+                ctx.arc(x + 6, y - 5, 4, 0, Math.PI*2);
+                ctx.fill();
+                
+                // Name Tag
+                ctx.fillStyle = 'white';
+                ctx.font = 'bold 14px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText(name.substring(0, 20), x, y - 35);
+            }
+        }
+
+        // --- NETWORKING ---
+        function initPeer(idToJoin = null) {
+            peer = new Peer();
+            
+            peer.on('open', (id) => {
+                myId = id;
+                if(idToJoin) {
+                    connectToHost(idToJoin);
+                } else {
+                    document.getElementById('connection-status').innerHTML = 
+                        `ID: ${id} <br> <small>Share URL to let others join!</small>`;
+                    // Update URL for easy sharing
+                    window.history.replaceState({}, '', `?join=${id}`);
+                }
+            });
+
+            peer.on('connection', (c) => {
+                if(!isHost) return;
+                c.on('open', () => {
+                    setupHostEvents(c);
+                });
+            });
+
+            peer.on('error', (err) => {
+                addChat("System", `Connection Error: ${err.type}`, "#ff4444");
+            });
+        }
+
+        function connectToHost(hostId) {
+            conn = peer.connect(hostId);
+            conn.on('open', () => {
+                isHost = false;
+                addChat("System", "Connected to host!");
+                document.getElementById('menu').style.display = 'none';
+                sendNet({type: 'join-request', name: myName});
+            });
+            conn.on('data', handleNetData);
+        }
+
+        function setupHostEvents(connection) {
+            connection.on('data', (data) => handleNetData(data, connection));
+        }
+
+        function sendNet(data) {
+            if(isHost) {
+                // Host broadcasts to all
+                Object.values(players).forEach(p => {
+                    if(p.conn && p.conn.open) p.conn.send(data);
+                });
+            } else if(conn && conn.open) {
+                conn.send(data);
+            }
+        }
+
+        function handleNetData(data, senderConn) {
+            switch(data.type) {
+                case 'join-request':
+                    const pCount = Object.keys(players).length + 1;
+                    if(pCount >= 7) addChat("System", "Warning: 7+ players may lag.");
+                    players[senderConn.peer] = {
+                        id: senderConn.peer,
+                        name: data.name,
+                        x: Math.floor(Math.random()*gridSize),
+                        y: Math.floor(Math.random()*gridSize),
+                        color: `hsl(${Math.random()*360}, 70%, 60%)`,
+                        crown: null,
+                        conn: senderConn
+                    };
+                    syncAll();
+                    addChat("System", `${data.name} joined!`);
+                    break;
+                case 'sync':
+                    players = data.players;
+                    grid = data.grid;
+                    gridSize = data.gridSize;
+                    currentTurnId = data.currentTurnId;
+                    break;
+                case 'chat':
+                    addChat(data.name, data.msg, data.color);
+                    break;
+                case 'move':
+                    if(players[data.id]) {
+                        players[data.id].x = data.x;
+                        players[data.id].y = data.y;
+                    }
+                    break;
+                case 'turn-action':
+                    handleTurnResolution(data);
+                    break;
+            }
+        }
+
+        function syncAll() {
+            if(!isHost) return;
+            sendNet({
+                type: 'sync',
+                players: players,
+                grid: grid,
+                gridSize: gridSize,
+                currentTurnId: currentTurnId
+            });
+        }
+
+        // --- GAME LOGIC ---
+        function startGame(mode) {
+            myName = prompt("Enter your Name:", "Player") || "Player";
+            myName = myName.substring(0, 20);
+            
+            if(mode === 'host') {
+                isHost = true;
+                initPeer();
+                players[myId] = {
+                    id: myId, name: myName, x: 5, y: 5, 
+                    color: `hsl(${Math.random()*360}, 70%, 60%)`, crown: null
+                };
+                setupGrid(16);
+                currentTurnId = myId;
+            } else if(mode === 'practice') {
+                // Local only logic simplified for code length
+                alert("Practice mode: You are the only player!");
+                startGame('host');
+                return;
+            }
+
+            document.getElementById('menu').style.display = 'none';
+            gameActive = true;
+            loop();
+        }
+
+        function setupGrid(size) {
+            gridSize = size;
+            grid = [];
+            for(let y=0; y<size; y++) {
+                grid[y] = [];
+                for(let x=0; x<size; x++) {
+                    grid[y][x] = { hits: 0, destroyed: false };
+                }
+            }
+        }
+
+        function handleInput(e) {
+            if(!gameActive) return;
+            const p = players[myId];
+            if(!p) return;
+
+            let nx = p.x, ny = p.y;
+            if(e.key === 'w' || e.key === 'ArrowUp') ny--;
+            if(e.key === 's' || e.key === 'ArrowDown') ny++;
+            if(e.key === 'a' || e.key === 'ArrowLeft') nx--;
+            if(e.key === 'd' || e.key === 'ArrowRight') nx++;
+
+            if(nx >= 0 && nx < gridSize && ny >= 0 && ny < gridSize) {
+                if(!grid[ny][nx].destroyed) {
+                    p.x = nx; p.y = ny;
+                    sendNet({type: 'move', id: myId, x: nx, y: ny});
+                }
+            }
+        }
+
+        window.addEventListener('keydown', handleInput);
+
+        // --- RENDER LOOP ---
+        const slimes = {};
+
+        function loop() {
+            if(!gameActive) return;
+            update();
+            draw();
+            requestAnimationFrame(loop);
+        }
+
+        function update() {
+            // Orientation Check
+            const isPortrait = window.innerHeight > window.innerWidth;
+            document.getElementById('rotate-prompt').style.display = isPortrait ? 'flex' : 'none';
+            document.getElementById('mobile-controls').style.display = ('ontouchstart' in window) ? 'block' : 'none';
+
+            // Physics Update
+            Object.values(players).forEach(p => {
+                if(!slimes[p.id]) slimes[p.id] = new Slime(p.color);
+                slimes[p.id].update(false); // Can add velocity detection
+            });
+
+            // Turn UI
+            const isMyTurn = currentTurnId === myId;
+            document.getElementById('turn-overlay').style.display = isMyTurn ? 'block' : 'none';
+        }
+
+        function draw() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            
+            const me = players[myId];
+            if(!me) return;
+
+            // Camera follow
+            const camX = canvas.width/2 - (me.x * TILE_SIZE);
+            const camY = canvas.height/2 - (me.y * TILE_SIZE);
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.save();
+            ctx.translate(camX, camY);
+
+            // Draw Grid
+            for(let y=0; y<gridSize; y++) {
+                for(let x=0; x<gridSize; x++) {
+                    const tile = grid[y][x];
+                    ctx.fillStyle = tile.destroyed ? '#000' : ((x+y)%2===0 ? '#222' : '#282828');
+                    ctx.fillRect(x*TILE_SIZE, y*TILE_SIZE, TILE_SIZE-2, TILE_SIZE-2);
+                    
+                    if(tile.hits === 1) {
+                        ctx.strokeStyle = 'rgba(255,0,0,0.5)';
+                        ctx.lineWidth = 4;
+                        ctx.strokeRect(x*TILE_SIZE+5, y*TILE_SIZE+5, TILE_SIZE-12, TILE_SIZE-12);
+                    }
+                }
+            }
+
+            // Draw Crowns
+            Object.values(players).forEach(p => {
+                if(p.crown) {
+                    ctx.font = '30px Arial';
+                    ctx.fillText('👑', p.crown.x * TILE_SIZE + 15, p.crown.y * TILE_SIZE + 45);
+                }
+            });
+
+            // Draw Players (Invisibility Logic)
+            Object.values(players).forEach(p => {
+                // If it's someone else's turn, they are invisible
+                if(currentTurnId !== myId && p.id === currentTurnId) return;
+                
+                const slime = slimes[p.id];
+                if(slime) {
+                    slime.draw(ctx, p.x * TILE_SIZE + TILE_SIZE/2, p.y * TILE_SIZE + TILE_SIZE/2, p.name);
+                }
+            });
+
+            ctx.restore();
+        }
+
+        // --- CHAT SYSTEM ---
+        const chatInput = document.getElementById('chat-input');
+        const chatHistory = document.getElementById('chat-history');
+
+        chatInput.addEventListener('keypress', (e) => {
+            if(e.key === 'Enter' && chatInput.value.trim() !== "") {
+                const msg = chatInput.value;
+                sendNet({type: 'chat', name: myName, msg: msg, color: players[myId].color});
+                addChat(myName, msg, players[myId].color);
+                chatInput.value = "";
+                chatInput.blur();
+            }
+        });
+
+        function addChat(name, msg, color = "#ffcc00") {
+            const div = document.createElement('div');
+            div.innerHTML = `<span style="color:${color}; font-weight:bold">${name}:</span> ${msg}`;
+            chatHistory.appendChild(div);
+            chatHistory.scrollTop = chatHistory.scrollHeight;
+        }
+
+        // --- INITIALIZATION ---
+        const urlParams = new URLSearchParams(window.location.search);
+        const joinId = urlParams.get('join');
+        if(joinId) {
+            document.getElementById('menu-buttons').innerHTML = `<button class="btn" onclick="startGame('join')">JOIN SESSION</button>`;
+            function startGameJoin() {
+                myName = prompt("Enter Name:", "Player") || "Player";
+                initPeer(joinId);
+                document.getElementById('menu').style.display = 'none';
+            }
+            document.querySelector('#menu-buttons button').onclick = startGameJoin;
+        }
+
+        // Handle Turn Actions (Clicking tiles)
+        canvas.addEventListener('mousedown', (e) => {
+            if(currentTurnId !== myId) return;
+            
+            const me = players[myId];
+            const camX = canvas.width/2 - (me.x * TILE_SIZE);
+            const camY = canvas.height/2 - (me.y * TILE_SIZE);
+            
+            const worldX = Math.floor((e.clientX - camX) / TILE_SIZE);
+            const worldY = Math.floor((e.clientY - camY) / TILE_SIZE);
+
+            if(worldX >= 0 && worldX < gridSize && worldY >= 0 && worldY < gridSize) {
+                // Simple turn logic: select tile to strike or move crown
+                if(!crownPlaced) {
+                    me.crown = {x: worldX, y: worldY};
+                    crownPlaced = true;
+                    addChat("Game", "Crown Placed! Now strike up to 3 tiles.");
+                } else if(strikesRemaining > 0) {
+                    if(!grid[worldY][worldX].destroyed) {
+                        grid[worldY][worldX].hits++;
+                        if(grid[worldY][worldX].hits >= 2) grid[worldY][worldX].destroyed = true;
+                        strikesRemaining--;
+                        addChat("Game", `Strikes left: ${strikesRemaining}`);
+                    }
+                }
+            }
+        });
+
+        document.getElementById('btn-end-turn').onclick = () => {
+            if(currentTurnId !== myId) return;
+            // Send end turn state
+            sendNet({
+                type: 'turn-action',
+                grid: grid,
+                player: players[myId]
+            });
+            // Reset local turn vars
+            strikesRemaining = 3;
+            crownPlaced = true;
+            
+            // Host handles rotation
+            if(isHost) passTurn();
+        };
+
+        function passTurn() {
+            const ids = Object.keys(players);
+            let idx = ids.indexOf(currentTurnId);
+            currentTurnId = ids[(idx + 1) % ids.length];
+            syncAll();
+        }
+
+    </script>
+</body>
+</html>
