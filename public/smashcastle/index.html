@@ -1,4 +1,3 @@
-<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -64,6 +63,17 @@
             display: none; flex-direction: column; align-items: center; justify-content: center;
         }
 
+        #host-controls, #current-turn-panel, #player-list {
+            background: var(--panel); border: 2px solid var(--primary); border-radius: 10px;
+            padding: 15px; color: white;
+        }
+
+        #rules-modal {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 200;
+            display: none; flex-direction: column; align-items: center; justify-content: center;
+            text-align: center; padding: 40px; max-width: 600px; margin: auto;
+        }
+
         canvas { display: block; image-rendering: pixelated; }
         
         .status-msg { color: var(--primary); font-weight: bold; margin-bottom: 10px; }
@@ -91,6 +101,24 @@
             <input type="text" id="chat-input" placeholder="Press Enter to chat..." maxlength="100">
         </div>
 
+        <!-- HOST CONTROLS -->
+        <div id="host-controls" style="display: none; position: absolute; top: 10px; right: 10px;">
+            <h3 style="margin: 0 0 10px 0; color: var(--primary);">HOST CONTROLS</h3>
+            <p id="player-count">Players: 1</p>
+            <button class="btn" onclick="startMatch()">START MATCH</button>
+        </div>
+
+        <!-- CURRENT TURN PANEL (visible to ALL) -->
+        <div id="current-turn-panel" style="display: none; position: absolute; top: 70px; left: 50%; transform: translateX(-50%);">
+            CURRENT TURN: <span id="current-player-name" style="color: var(--primary); font-weight: bold;"></span>
+        </div>
+
+        <!-- PLAYER LIST / CROWNS -->
+        <div id="player-list" style="display: none; position: absolute; top: 10px; right: 340px; width: 220px; max-height: 300px; overflow-y: auto;">
+            <h3 style="margin: 0 0 10px 0; color: var(--primary);">👑 CROWNS</h3>
+            <div id="player-list-content"></div>
+        </div>
+
         <div id="turn-overlay">
             <div id="turn-instruction" class="status-msg">YOUR TURN</div>
             <div id="turn-actions">
@@ -106,6 +134,25 @@
         </div>
     </div>
 
+    <!-- RULES MODAL -->
+    <div id="rules-modal">
+        <h1 style="color: var(--primary); margin-bottom: 20px;">SMASH CASTLE RULES</h1>
+        <div style="max-width: 520px; line-height: 1.6; font-size: 1.1rem;">
+            <p><strong>Pre-Match:</strong> Everyone moves freely on the grid. Host decides when to START MATCH.</p>
+            <p><strong>Turns (cycle by join order):</strong></p>
+            <ul style="text-align: left; margin: 10px 0;">
+                <li>First: Choose a tile to HIDE your crown underneath.</li>
+                <li>Then: Strike 1–3 tiles.</li>
+            </ul>
+            <p>A tile breaks after 2 strikes total. If a crown is underneath → it is stolen! Chat announces: “Player X’s crown has been stolen!” (stealer hidden for mystery).</p>
+            <p>You can have MULTIPLE crowns. On your turn you reposition/hide ONE crown. If you have 0 crowns at the start of your turn, you MUST use all 3 strikes to steal one (RECLAIM MODE). If you still have 0 after your turn → eliminated to audience.</p>
+            <p>When unbroken tiles ≤ (players × 3 + 1) → everyone teleports to a smaller new map with fresh crowns (1 per survivor).</p>
+            <p>During anyone’s turn, others are teleported to a tiny 3×3 safe zone (audience view).</p>
+            <p>Last player standing with crowns WINS!</p>
+        </div>
+        <button class="btn" onclick="hideRulesModal()" style="margin-top: 30px;">I UNDERSTAND — LET’S SMASH!</button>
+    </div>
+
     <canvas id="gameCanvas"></canvas>
 
     <script>
@@ -118,13 +165,18 @@
         let gameActive = false;
         let myId = '';
         let myName = '';
+        let myColor = '';
         let players = {}; // {id: PlayerObject}
         let grid = []; // [[{hits: 0, destroyed: false}]]
         let gridSize = 16;
         let currentTurnId = null;
-        let turnPhase = 'idle'; // 'idle', 'moving', 'striking'
+        let phase = 'prematch'; // 'prematch', 'match'
+        let turnSubPhase = 'idle';
         let strikesRemaining = 3;
-        let crownPlaced = false;
+        let lastPlaced = null;
+        let playerCrownCounts = {};
+        let crownLocations = {}; // ONLY HOST knows this (hidden from others)
+        let activePlayersOnly = [];
 
         // --- PHYSICS: Jiggle Slime ---
         class Slime {
@@ -197,9 +249,9 @@
                 if(idToJoin) {
                     connectToHost(idToJoin);
                 } else {
+                    const fullUrl = `${window.location.origin}${window.location.pathname}?join=${id}`;
                     document.getElementById('connection-status').innerHTML = 
-                        `ID: ${id} <br> <small>Share URL to let others join!</small>`;
-                    // Update URL for easy sharing
+                        `YOUR ID: <strong>${id}</strong><br><small>Share this link: <a href="${fullUrl}" style="color:var(--primary)">${fullUrl}</a></small>`;
                     window.history.replaceState({}, '', `?join=${id}`);
                 }
             });
@@ -220,20 +272,22 @@
             conn = peer.connect(hostId);
             conn.on('open', () => {
                 isHost = false;
-                addChat("System", "Connected to host!");
-                document.getElementById('menu').style.display = 'none';
+                addChat("System", "Connected to host! Waiting for match to begin...");
                 sendNet({type: 'join-request', name: myName});
             });
             conn.on('data', handleNetData);
+            conn.on('close', () => addChat("System", "Host disconnected.", "#ff4444"));
         }
 
         function setupHostEvents(connection) {
             connection.on('data', (data) => handleNetData(data, connection));
+            connection.on('close', () => {
+                // Clean up if needed
+            });
         }
 
         function sendNet(data) {
             if(isHost) {
-                // Host broadcasts to all
                 Object.values(players).forEach(p => {
                     if(p.conn && p.conn.open) p.conn.send(data);
                 });
@@ -245,25 +299,29 @@
         function handleNetData(data, senderConn) {
             switch(data.type) {
                 case 'join-request':
+                    if(!isHost) return;
                     const pCount = Object.keys(players).length + 1;
-                    if(pCount >= 7) addChat("System", "Warning: 7+ players may lag.");
+                    if(pCount >= 7) addChat("System", "Warning: 7+ players may lag.", "#ffaa00");
                     players[senderConn.peer] = {
                         id: senderConn.peer,
                         name: data.name,
                         x: Math.floor(Math.random()*gridSize),
                         y: Math.floor(Math.random()*gridSize),
                         color: `hsl(${Math.random()*360}, 70%, 60%)`,
-                        crown: null,
+                        isAudience: false,
                         conn: senderConn
                     };
                     syncAll();
                     addChat("System", `${data.name} joined!`);
                     break;
                 case 'sync':
-                    players = data.players;
-                    grid = data.grid;
-                    gridSize = data.gridSize;
-                    currentTurnId = data.currentTurnId;
+                    players = data.players || players;
+                    grid = data.grid || grid;
+                    gridSize = data.gridSize || gridSize;
+                    currentTurnId = data.currentTurnId || currentTurnId;
+                    phase = data.phase || phase;
+                    playerCrownCounts = data.playerCrownCounts || playerCrownCounts;
+                    // crownLocations NEVER synced (hidden on host only)
                     break;
                 case 'chat':
                     addChat(data.name, data.msg, data.color);
@@ -275,7 +333,10 @@
                     }
                     break;
                 case 'turn-action':
-                    handleTurnResolution(data);
+                    if(isHost) resolveTurn(data);
+                    break;
+                case 'show-rules':
+                    document.getElementById('rules-modal').style.display = 'flex';
                     break;
             }
         }
@@ -287,27 +348,128 @@
                 players: players,
                 grid: grid,
                 gridSize: gridSize,
-                currentTurnId: currentTurnId
+                currentTurnId: currentTurnId,
+                phase: phase,
+                playerCrownCounts: playerCrownCounts
             });
+        }
+
+        // --- TURN RESOLUTION (HOST ONLY) ---
+        function resolveTurn(data) {
+            if(!isHost) return;
+
+            const actingId = currentTurnId;
+            const oldGrid = JSON.parse(JSON.stringify(grid));
+            grid = data.grid || grid;
+
+            // Place crown (host records secretly)
+            if(data.placedTile) {
+                const key = `${data.placedTile.x}:${data.placedTile.y}`;
+                crownLocations[key] = actingId;
+            }
+
+            // Check newly destroyed tiles for crowns
+            for(let y = 0; y < gridSize; y++) {
+                for(let x = 0; x < gridSize; x++) {
+                    if(!oldGrid[y][x].destroyed && grid[y][x].destroyed) {
+                        const key = `${x}:${y}`;
+                        if(crownLocations[key]) {
+                            const oldOwner = crownLocations[key];
+                            delete crownLocations[key];
+                            playerCrownCounts[oldOwner] = (playerCrownCounts[oldOwner] || 1) - 1;
+                            playerCrownCounts[actingId] = (playerCrownCounts[actingId] || 0) + 1;
+                            addChat("Game", `${players[oldOwner].name}'s crown has been stolen!`, "#ff4444");
+                        }
+                    }
+                }
+            }
+
+            // Check for elimination (if acting player still has 0 crowns after their turn)
+            if((playerCrownCounts[actingId] || 0) === 0) {
+                addChat("Game", `${players[actingId].name} failed to reclaim a crown and is now audience!`, "#ff4444");
+                players[actingId].isAudience = true;
+            }
+
+            passTurn();
+            checkForNewRound();
+            syncAll();
+        }
+
+        function passTurn() {
+            const activeIds = Object.keys(players).filter(id => !players[id].isAudience);
+            if(activeIds.length <= 1) {
+                if(activeIds.length === 1) addChat("Game", `${players[activeIds[0]].name} IS THE WINNER! 🏆`, "#ffcc00");
+                return;
+            }
+            let idx = activeIds.indexOf(currentTurnId);
+            currentTurnId = activeIds[(idx + 1) % activeIds.length];
+        }
+
+        function checkForNewRound() {
+            if(!isHost) return;
+            let unbroken = 0;
+            for(let y = 0; y < gridSize; y++) {
+                for(let x = 0; x < gridSize; x++) {
+                    if(!grid[y][x].destroyed) unbroken++;
+                }
+            }
+            const activeCount = Object.keys(players).filter(id => !players[id].isAudience).length;
+            if(unbroken <= activeCount * 3 + 1 && activeCount > 1) {
+                newRound();
+            }
+        }
+
+        function newRound() {
+            if(!isHost) return;
+            addChat("Game", "Tiles almost gone! Moving to a smaller map...", "#ffcc00");
+            gridSize = Math.max(8, Math.floor(gridSize * 0.7));
+            setupGrid(gridSize);
+            crownLocations = {}; // reset hidden crowns
+
+            const activeIds = Object.keys(players).filter(id => !players[id].isAudience);
+            activeIds.forEach(id => playerCrownCounts[id] = 1);
+
+            currentTurnId = activeIds[0];
+            syncAll();
+        }
+
+        function startMatch() {
+            if(!isHost) return;
+            phase = 'match';
+            Object.keys(players).forEach(id => {
+                players[id].isAudience = false;
+                playerCrownCounts[id] = 1;
+            });
+            currentTurnId = Object.keys(players)[0]; // host first
+            turnSubPhase = 'idle';
+            strikesRemaining = 3;
+            lastPlaced = null;
+            syncAll();
+            sendNet({type: 'show-rules'});
+            addChat("Game", "MATCH BEGINS! Host goes first.", "#ffcc00");
+        }
+
+        function hideRulesModal() {
+            document.getElementById('rules-modal').style.display = 'none';
         }
 
         // --- GAME LOGIC ---
         function startGame(mode) {
             myName = prompt("Enter your Name:", "Player") || "Player";
             myName = myName.substring(0, 20);
+            myColor = `hsl(${Math.random()*360}, 70%, 60%)`;
             
             if(mode === 'host') {
                 isHost = true;
                 initPeer();
                 players[myId] = {
                     id: myId, name: myName, x: 5, y: 5, 
-                    color: `hsl(${Math.random()*360}, 70%, 60%)`, crown: null
+                    color: myColor, isAudience: false
                 };
                 setupGrid(16);
                 currentTurnId = myId;
             } else if(mode === 'practice') {
-                // Local only logic simplified for code length
-                alert("Practice mode: You are the only player!");
+                alert("Practice mode: You are the only player!\n\nHost controls will appear after you load.");
                 startGame('host');
                 return;
             }
@@ -329,7 +491,7 @@
         }
 
         function handleInput(e) {
-            if(!gameActive) return;
+            if(!gameActive || phase !== 'prematch' && currentTurnId !== myId) return;
             const p = players[myId];
             if(!p) return;
 
@@ -360,20 +522,57 @@
         }
 
         function update() {
-            // Orientation Check
+            // Orientation & mobile
             const isPortrait = window.innerHeight > window.innerWidth;
             document.getElementById('rotate-prompt').style.display = isPortrait ? 'flex' : 'none';
             document.getElementById('mobile-controls').style.display = ('ontouchstart' in window) ? 'block' : 'none';
 
-            // Physics Update
+            // Host controls (pre-match only)
+            document.getElementById('host-controls').style.display = (isHost && phase === 'prematch') ? 'block' : 'none';
+            if(isHost && phase === 'prematch') {
+                document.getElementById('player-count').innerText = `Players: ${Object.keys(players).length}`;
+            }
+
+            // Current turn panel (ALL players see)
+            const showTurnPanel = phase === 'match';
+            document.getElementById('current-turn-panel').style.display = showTurnPanel ? 'block' : 'none';
+            if(showTurnPanel && players[currentTurnId]) {
+                document.getElementById('current-player-name').innerText = players[currentTurnId].name;
+            }
+
+            // Player list / crowns panel
+            const showList = phase === 'match';
+            document.getElementById('player-list').style.display = showList ? 'block' : 'none';
+            if(showList) {
+                let html = '';
+                Object.values(players).forEach(p => {
+                    const count = playerCrownCounts[p.id] || 0;
+                    const status = p.isAudience ? ' (Audience)' : '';
+                    html += `<div style="margin: 4px 0; color: ${p.color};">${p.name}${status}: ${count} 👑</div>`;
+                });
+                document.getElementById('player-list-content').innerHTML = html;
+            }
+
+            // Turn UI for current player
+            const isMyTurn = phase === 'match' && currentTurnId === myId;
+            document.getElementById('turn-overlay').style.display = isMyTurn ? 'block' : 'none';
+
+            if(isMyTurn) {
+                const myCrowns = playerCrownCounts[myId] || 0;
+                if(turnSubPhase === 'idle') {
+                    turnSubPhase = (myCrowns > 0) ? 'placingCrown' : 'striking';
+                    strikesRemaining = 3;
+                }
+                let instr = turnSubPhase === 'placingCrown' ? "PLACE YOUR CROWN" : "STRIKE UP TO 3 TILES";
+                if(myCrowns === 0) instr = "RECLAIM MODE — STRIKE 3 TILES!";
+                document.getElementById('turn-instruction').innerText = instr;
+            }
+
+            // Physics
             Object.values(players).forEach(p => {
                 if(!slimes[p.id]) slimes[p.id] = new Slime(p.color);
-                slimes[p.id].update(false); // Can add velocity detection
+                slimes[p.id].update(false);
             });
-
-            // Turn UI
-            const isMyTurn = currentTurnId === myId;
-            document.getElementById('turn-overlay').style.display = isMyTurn ? 'block' : 'none';
         }
 
         function draw() {
@@ -383,9 +582,15 @@
             const me = players[myId];
             if(!me) return;
 
-            // Camera follow
-            const camX = canvas.width/2 - (me.x * TILE_SIZE);
-            const camY = canvas.height/2 - (me.y * TILE_SIZE);
+            // Camera (normal follow OR safe-zone for audience)
+            let camX = canvas.width/2 - (me.x * TILE_SIZE);
+            let camY = canvas.height/2 - (me.y * TILE_SIZE);
+            const isAudienceView = phase === 'match' && currentTurnId !== myId;
+            if(isAudienceView) {
+                // Tiny 3x3 safe zone view
+                camX = canvas.width/2 - (1 * TILE_SIZE);
+                camY = canvas.height/2 - (1 * TILE_SIZE);
+            }
 
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.save();
@@ -406,26 +611,31 @@
                 }
             }
 
-            // Draw Crowns
+            // Draw Players (active player invisible to others)
             Object.values(players).forEach(p => {
-                if(p.crown) {
-                    ctx.font = '30px Arial';
-                    ctx.fillText('👑', p.crown.x * TILE_SIZE + 15, p.crown.y * TILE_SIZE + 45);
-                }
-            });
-
-            // Draw Players (Invisibility Logic)
-            Object.values(players).forEach(p => {
-                // If it's someone else's turn, they are invisible
-                if(currentTurnId !== myId && p.id === currentTurnId) return;
+                if(phase === 'match' && currentTurnId !== myId && p.id === currentTurnId) return;
                 
                 const slime = slimes[p.id];
                 if(slime) {
-                    slime.draw(ctx, p.x * TILE_SIZE + TILE_SIZE/2, p.y * TILE_SIZE + TILE_SIZE/2, p.name);
+                    const drawX = p.x * TILE_SIZE + TILE_SIZE/2;
+                    const drawY = p.y * TILE_SIZE + TILE_SIZE/2;
+                    slime.draw(ctx, drawX, drawY, p.name);
                 }
             });
 
             ctx.restore();
+
+            // Audience safe-zone overlay
+            if(isAudienceView) {
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = 'white';
+                ctx.font = 'bold 32px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText(`WAITING FOR ${players[currentTurnId] ? players[currentTurnId].name.toUpperCase() : 'PLAYER'}'S TURN`, canvas.width/2, canvas.height/2 - 60);
+                ctx.font = 'bold 24px sans-serif';
+                ctx.fillText('YOU ARE IN THE 3×3 SAFE ZONE', canvas.width/2, canvas.height/2 + 20);
+            }
         }
 
         // --- CHAT SYSTEM ---
@@ -435,8 +645,9 @@
         chatInput.addEventListener('keypress', (e) => {
             if(e.key === 'Enter' && chatInput.value.trim() !== "") {
                 const msg = chatInput.value;
-                sendNet({type: 'chat', name: myName, msg: msg, color: players[myId].color});
-                addChat(myName, msg, players[myId].color);
+                const colorToUse = myColor || '#ffcc00';
+                sendNet({type: 'chat', name: myName, msg: msg, color: colorToUse});
+                addChat(myName, msg, colorToUse);
                 chatInput.value = "";
                 chatInput.blur();
             }
@@ -449,22 +660,9 @@
             chatHistory.scrollTop = chatHistory.scrollHeight;
         }
 
-        // --- INITIALIZATION ---
-        const urlParams = new URLSearchParams(window.location.search);
-        const joinId = urlParams.get('join');
-        if(joinId) {
-            document.getElementById('menu-buttons').innerHTML = `<button class="btn" onclick="startGame('join')">JOIN SESSION</button>`;
-            function startGameJoin() {
-                myName = prompt("Enter Name:", "Player") || "Player";
-                initPeer(joinId);
-                document.getElementById('menu').style.display = 'none';
-            }
-            document.querySelector('#menu-buttons button').onclick = startGameJoin;
-        }
-
-        // Handle Turn Actions (Clicking tiles)
+        // --- TURN ACTIONS ---
         canvas.addEventListener('mousedown', (e) => {
-            if(currentTurnId !== myId) return;
+            if(phase !== 'match' || currentTurnId !== myId) return;
             
             const me = players[myId];
             const camX = canvas.width/2 - (me.x * TILE_SIZE);
@@ -473,46 +671,60 @@
             const worldX = Math.floor((e.clientX - camX) / TILE_SIZE);
             const worldY = Math.floor((e.clientY - camY) / TILE_SIZE);
 
-            if(worldX >= 0 && worldX < gridSize && worldY >= 0 && worldY < gridSize) {
-                // Simple turn logic: select tile to strike or move crown
-                if(!crownPlaced) {
-                    me.crown = {x: worldX, y: worldY};
-                    crownPlaced = true;
-                    addChat("Game", "Crown Placed! Now strike up to 3 tiles.");
-                } else if(strikesRemaining > 0) {
-                    if(!grid[worldY][worldX].destroyed) {
-                        grid[worldY][worldX].hits++;
-                        if(grid[worldY][worldX].hits >= 2) grid[worldY][worldX].destroyed = true;
-                        strikesRemaining--;
-                        addChat("Game", `Strikes left: ${strikesRemaining}`);
-                    }
-                }
+            if(worldX < 0 || worldX >= gridSize || worldY < 0 || worldY >= gridSize) return;
+            if(grid[worldY][worldX].destroyed) return;
+
+            const myCrowns = playerCrownCounts[myId] || 0;
+
+            if(turnSubPhase === 'placingCrown' && myCrowns > 0) {
+                lastPlaced = {x: worldX, y: worldY};
+                turnSubPhase = 'striking';
+                strikesRemaining = 3;
+                addChat("Game", "Crown placed! Now strike up to 3 tiles.");
+            } else if(turnSubPhase === 'striking' && strikesRemaining > 0) {
+                grid[worldY][worldX].hits++;
+                if(grid[worldY][worldX].hits >= 2) grid[worldY][worldX].destroyed = true;
+                strikesRemaining--;
+                addChat("Game", `Strikes left: ${strikesRemaining}`);
             }
         });
 
         document.getElementById('btn-end-turn').onclick = () => {
-            if(currentTurnId !== myId) return;
-            // Send end turn state
-            sendNet({
-                type: 'turn-action',
+            if(phase !== 'match' || currentTurnId !== myId) return;
+
+            const dataForResolve = {
                 grid: grid,
-                player: players[myId]
-            });
-            // Reset local turn vars
+                placedTile: lastPlaced
+            };
+
+            if(isHost) {
+                resolveTurn(dataForResolve);
+            } else {
+                sendNet({type: 'turn-action', grid: grid, placedTile: lastPlaced});
+            }
+
+            // Local reset
             strikesRemaining = 3;
-            crownPlaced = true;
-            
-            // Host handles rotation
-            if(isHost) passTurn();
+            lastPlaced = null;
+            turnSubPhase = 'idle';
         };
 
-        function passTurn() {
-            const ids = Object.keys(players);
-            let idx = ids.indexOf(currentTurnId);
-            currentTurnId = ids[(idx + 1) % ids.length];
-            syncAll();
+        // --- INITIALIZATION ---
+        const urlParams = new URLSearchParams(window.location.search);
+        const joinId = urlParams.get('join');
+        if(joinId) {
+            document.getElementById('menu-buttons').innerHTML = `<button class="btn" onclick="startGameJoin()">JOIN SESSION</button>`;
+            window.startGameJoin = function() {
+                myName = prompt("Enter Name:", "Player") || "Player";
+                myName = myName.substring(0, 20);
+                initPeer(joinId);
+                document.getElementById('menu').style.display = 'none';
+            };
         }
 
+        // Expose startMatch for host button
+        window.startMatch = startMatch;
+        window.hideRulesModal = hideRulesModal;
     </script>
 </body>
 </html>
