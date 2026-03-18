@@ -318,6 +318,10 @@
         function handleIncomingData(rawData, fromPeer) {
             const data = typeof rawData === "string" ? JSON.parse(rawData) : rawData
             
+            // ADD THIS CHECK: If game hasn't started, ignore turn-related signals 
+            // unless it's the official gameStarted payload.
+            if (!gameStarted && data.type !== "gameStarted") return;
+            
             if (data.type === "gameStarted") {
                 gameStarted = true
                 gridSize = data.gridSize
@@ -488,23 +492,20 @@ if (data.type === "yourSmashTurn") {
         function processHide(fromPeer, positions) {
             if (!currentCrownPositions[fromPeer]) currentCrownPositions[fromPeer] = []
             currentCrownPositions[fromPeer] = positions
-            log(`${players.find(p=>p.peerId===fromPeer).name} hid their crown(s)`, "emerald")
             
-            // move to smash phase for same player
             const player = players.find(p => p.peerId === fromPeer)
+            log(`${player.name} hid their crown(s)`, "emerald")
+            
             if (player.peerId === myPeerId) {
                 currentPhase = "smash"
-                maxSelect = 3
+                maxSelect = 3 // Standard 1-3 tiles for Smash phase [cite: 16]
                 selectedTiles = []
-                isMyTurn = true
+                isMyTurn = true // Re-affirm it is still the host's turn to smash
                 triggerActionUI()
             } else {
-                sendTo(fromPeer, {type: "yourGraceTurn"}) // wait, no - always smash after hide
-                sendTo(fromPeer, {type: "yourSmashAfterHide"}) // we use same graceTurn UI for simplicity
-                // Actually better: send a generic yourSmashTurn
+                // Host tells the client it's now time to smash
+                sendTo(fromPeer, {type: "yourSmashTurn"})
             }
-            // simplified: send yourSmashTurn
-            sendTo(fromPeer, {type: "yourSmashTurn"})
             broadcast({type: "stateUpdate", tiles: tiles, players: getPublicPlayers()})
         }
         
@@ -617,30 +618,34 @@ if (data.type === "yourSmashTurn") {
         function confirmAction() {
             if (!isMyTurn) return
             
+            // Create a copy so clearing the array doesn't delete the data being sent
+            const tilesToSend = [...selectedTiles];
+            selectedTiles = []; // Clear this IMMEDIATELY to reset UI state
+            
             if (currentPhase === "hide") {
-                // send to host (or process locally if host)
                 if (isHost) {
-                    processHide(myPeerId, [...selectedTiles])
+                    processHide(myPeerId, tilesToSend)
                 } else {
                     sendTo(connections[0].peerId, {
                         type: "hide",
-                        positions: selectedTiles
+                        positions: tilesToSend
                     })
+                    isMyTurn = false; // Client must wait for host to confirm Smash turn
                 }
             } else {
-                // smash or grace
                 if (isHost) {
-                    processSmash(myPeerId, [...selectedTiles])
+                    processSmash(myPeerId, tilesToSend)
                 } else {
                     sendTo(connections[0].peerId, {
                         type: "smash",
-                        tiles: selectedTiles
+                        tiles: tilesToSend
                     })
+                    isMyTurn = false;
                 }
             }
             
-            selectedTiles = []
             renderGrid()
+            updateConfirmButton() // Ensure button goes back to disabled state
         }
         
         function cancelSelection() {
@@ -821,16 +826,17 @@ if (data.type === "yourSmashTurn") {
                 activePlayers: activePlayers
             })
             
-            // start first turn (host)
             const firstPid = activePlayers[0]
+            const firstPlayer = players.find(p => p.peerId === firstPid);
+
             if (firstPid === myPeerId) {
                 isMyTurn = true
                 currentPhase = "hide"
-                maxSelect = 1
+                maxSelect = firstPlayer.crowns; // Use actual crown count [cite: 15, 18]
                 selectedTiles = []
                 triggerActionUI()
             } else {
-                sendTo(firstPid, {type: "yourHideTurn", crowns: 1})
+                sendTo(firstPid, {type: "yourHideTurn", crowns: firstPlayer.crowns})
             }
             
             renderAll()
