@@ -350,6 +350,14 @@
                 document.getElementById("spectator-notice").classList.add("hidden")
                 triggerActionUI()
             }
+
+if (data.type === "yourSmashTurn") {
+                isMyTurn = true;
+                currentPhase = "smash";
+                maxSelect = 3; // Players get up to 3 strikes per turn
+                selectedTiles = [];
+                triggerActionUI();
+            }
             
             if (data.type === "yourGraceTurn") {
                 isMyTurn = true
@@ -680,8 +688,38 @@
                 
                 conn.on("close", () => {
                     connections = connections.filter(c => c.peerId !== conn.peer)
-                    updateWaitingList()
+                    
+                    if (!gameStarted) {
+                        players = players.filter(p => p.peerId !== conn.peer);
+                        updateWaitingList();
+                    } else {
+                        // Mid-game disconnect logic
+                        const dropPlayer = players.find(p => p.peerId === conn.peer);
+                        if (dropPlayer && !dropPlayer.eliminated) {
+                            dropPlayer.eliminated = true;
+                            log(`${dropPlayer.name} fled the battlefield!`, "red");
+                            
+                            // Remove from active turn cycle
+                            const wasTheirTurn = (activePlayers[currentTurnIndex] === conn.peer);
+                            activePlayers = activePlayers.filter(id => id !== conn.peer);
+                            
+                            // Broadcast the updated state so everyone sees them eliminated
+                            broadcast({type: "stateUpdate", tiles: tiles, players: getPublicPlayers()});
+                            
+                            // If it was the disconnected player's turn, force the game to continue
+                            if (wasTheirTurn) {
+                                // Adjust index to prevent skipping the next person in line
+                                if (currentTurnIndex >= activePlayers.length) {
+                                    currentTurnIndex = 0; 
+                                } else {
+                                    currentTurnIndex--; 
+                                }
+                                advanceTurn();
+                            }
+                        }
+                    }
                 })
+
             })
         }
         
@@ -690,6 +728,27 @@
                 const existing = players.find(p => p.peerId === fromPeer)
                 if (existing) return
                 
+                // SPECTATOR SYNC: If game already started, send them state immediately
+                if (gameStarted) {
+                    sendTo(fromPeer, {
+                        type: "gameStarted",
+                        gridSize: gridSize,
+                        tiles: tiles,
+                        players: getPublicPlayers(),
+                        activePlayers: activePlayers
+                    });
+                    sendTo(fromPeer, { type: "youAreSpectator" });
+                    
+                    // Sync the current turn display for the spectator
+                    const currentPlayerId = activePlayers[currentTurnIndex];
+                    const currentPlayer = players.find(p => p.peerId === currentPlayerId);
+                    if (currentPlayer) {
+                        sendTo(fromPeer, { type: "turnUpdate", currentPlayer: currentPlayer.name });
+                    }
+                    return; // Stop here, do not add them to the players array
+                }
+
+                // Normal pre-game join logic
                 const newName = data.name || `Warrior${players.length}`
                 const newPlayer = {
                     peerId: fromPeer,
@@ -707,10 +766,14 @@
             }
             
             if (data.type === "hide" && gameStarted) {
+                // SECURITY CHECK: Ignore if it's not this player's turn
+                if (activePlayers[currentTurnIndex] !== fromPeer) return;
                 processHide(fromPeer, data.positions)
             }
             
             if (data.type === "smash" && gameStarted) {
+                // SECURITY CHECK: Ignore if it's not this player's turn
+                if (activePlayers[currentTurnIndex] !== fromPeer) return;
                 processSmash(fromPeer, data.tiles)
             }
         }

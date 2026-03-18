@@ -1,0 +1,27 @@
+[cite_start]**Smash Castle** is a strategic game of hidden identity and tactical destruction, blending elements of classic grid-based guessing games with a high-stakes "king of the hill" twist[cite: 14, 23]. [cite_start]Whether played on a digital screen or a physical board, the core objective is to protect your own treasures while hunting down those of your opponents[cite: 3].
+
+
+### **The Setup**
+[cite_start]The game is played on a **grid of tiles**[cite: 3]. [cite_start]The size of the playing area expands or contracts based on the number of participants to ensure the map never feels too empty or too crowded[cite: 9]. [cite_start]Each player begins the match in possession of a **Crown**[cite: 3, 15].
+
+### **How to Play**
+[cite_start]The match follows a turn-based system where players cycle through two distinct phases[cite: 7]:
+
+* **Phase 1: The Hide**
+    [cite_start]Every turn, you must decide where to keep your Crown[cite: 15]. [cite_start]You can choose to leave it in its current location or secretly move it to a different tile to stay one step ahead of your rivals[cite: 13, 19].
+* **Phase 2: The Smash**
+    [cite_start]After securing your Crown, you select **1 to 3 tiles** on the board to "strike" or "smash"[cite: 16]. 
+
+### **The Mechanics of Destruction**
+Tiles are not destroyed instantly. [cite_start]It takes **two strikes** to fully break a tile and reveal what lies beneath it[cite: 12, 16].
+* [cite_start]**First Strike:** The tile becomes "damaged" or cracked[cite: 31].
+* [cite_start]**Second Strike:** The tile breaks completely, revealing its contents to everyone[cite: 16, 31].
+
+### **Stealing and Elimination**
+[cite_start]If you break a tile that contains an opponent's Crown, you **capture** it[cite: 17]. 
+* [cite_start]**Multiple Crowns:** A player can collect and hide multiple Crowns simultaneously[cite: 18].
+* [cite_start]**The Grace Turn:** If your Crown is stolen, you aren't out immediately[cite: 21]. [cite_start]On your next turn, you have one final "grace" period to use your three strikes to find and reclaim *any* Crown on the board[cite: 21, 26]. 
+* [cite_start]**Elimination:** If you fail to find a Crown during your grace turn, you are eliminated from the game[cite: 22].
+
+### **Winning the Game**
+[cite_start]As the match progresses and tiles are destroyed, the playing field can become too small[cite: 24]. [cite_start]When only a few tiles remain, the surviving players are "teleported" to a **new, smaller map** to continue the tournament[cite: 24, 25]. [cite_start]The game concludes when only two players remain and one is unable to protect or recover a Crown, leaving the final player as the victor[cite: 26].
