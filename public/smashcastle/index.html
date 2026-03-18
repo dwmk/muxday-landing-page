@@ -157,574 +157,418 @@
 
     <script>
         // --- CONFIG & GLOBALS ---
-        const TILE_SIZE = 64;
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
-        let peer, conn;
-        let isHost = false;
-        let gameActive = false;
-        let myId = '';
-        let myName = '';
-        let myColor = '';
-        let players = {}; // {id: PlayerObject}
-        let grid = []; // [[{hits: 0, destroyed: false}]]
-        let gridSize = 16;
-        let currentTurnId = null;
-        let phase = 'prematch'; // 'prematch', 'match'
-        let turnSubPhase = 'idle';
-        let strikesRemaining = 3;
-        let lastPlaced = null;
-        let playerCrownCounts = {};
-        let crownLocations = {}; // ONLY HOST knows this (hidden from others)
-        let activePlayersOnly = [];
+const TILE_SIZE = 64;
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+let peer, conn;
+let isHost = false;
+let gameActive = false;
+let myId = null; // Start as null to prevent race conditions
+let myName = '';
+let myColor = '';
+let players = {}; 
+let grid = []; 
+let gridSize = 16;
+let currentTurnId = null;
+let phase = 'prematch'; 
+let turnSubPhase = 'idle';
+let strikesRemaining = 3;
+let lastPlaced = null;
+let playerCrownCounts = {};
+let crownLocations = {}; // Host-only secret
+let slimes = {};
 
-        // --- PHYSICS: Jiggle Slime ---
-        class Slime {
-            constructor(color) {
-                this.color = color;
-                this.points = [];
-                this.numPoints = 8;
-                this.radius = 20;
-                for(let i=0; i<this.numPoints; i++) {
-                    const angle = (i / this.numPoints) * Math.PI * 2;
-                    this.points.push({
-                        x: Math.cos(angle) * this.radius,
-                        y: Math.sin(angle) * this.radius,
-                        ox: Math.cos(angle) * this.radius,
-                        oy: Math.sin(angle) * this.radius,
-                        vx: 0, vy: 0
-                    });
-                }
-            }
-
-            update(isMoving) {
-                const bounce = isMoving ? 0.2 : 0.05;
-                this.points.forEach(p => {
-                    const dx = p.ox - p.x;
-                    const dy = p.oy - p.y;
-                    p.vx += dx * bounce + (Math.random() - 0.5) * 0.5;
-                    p.vy += dy * bounce + (Math.random() - 0.5) * 0.5;
-                    p.x += p.vx; p.y += p.vy;
-                    p.vx *= 0.8; p.vy *= 0.8;
-                });
-            }
-
-            draw(ctx, x, y, name) {
-                ctx.beginPath();
-                ctx.moveTo(x + this.points[0].x, y + this.points[0].y);
-                for(let i=1; i<=this.numPoints; i++) {
-                    const p = this.points[i % this.numPoints];
-                    const prev = this.points[i-1];
-                    const xc = (x + prev.x + x + p.x) / 2;
-                    const yc = (y + prev.y + y + p.y) / 2;
-                    ctx.quadraticCurveTo(x + prev.x, y + prev.y, xc, yc);
-                }
-                ctx.fillStyle = this.color;
-                ctx.fill();
-                ctx.strokeStyle = 'white';
-                ctx.lineWidth = 2;
-                ctx.stroke();
-
-                // Eyes
-                ctx.fillStyle = 'white';
-                ctx.beginPath();
-                ctx.arc(x - 6, y - 5, 4, 0, Math.PI*2);
-                ctx.arc(x + 6, y - 5, 4, 0, Math.PI*2);
-                ctx.fill();
-                
-                // Name Tag
-                ctx.fillStyle = 'white';
-                ctx.font = 'bold 14px sans-serif';
-                ctx.textAlign = 'center';
-                ctx.fillText(name.substring(0, 20), x, y - 35);
-            }
-        }
-
-        // --- NETWORKING ---
-        function initPeer(idToJoin = null) {
-            peer = new Peer();
-            
-            peer.on('open', (id) => {
-                myId = id;
-                if(idToJoin) {
-                    connectToHost(idToJoin);
-                } else {
-                    const fullUrl = `${window.location.origin}${window.location.pathname}?join=${id}`;
-                    document.getElementById('connection-status').innerHTML = 
-                        `YOUR ID: <strong>${id}</strong><br><small>Share this link: <a href="${fullUrl}" style="color:var(--primary)">${fullUrl}</a></small>`;
-                    window.history.replaceState({}, '', `?join=${id}`);
-                }
-            });
-
-            peer.on('connection', (c) => {
-                if(!isHost) return;
-                c.on('open', () => {
-                    setupHostEvents(c);
-                });
-            });
-
-            peer.on('error', (err) => {
-                addChat("System", `Connection Error: ${err.type}`, "#ff4444");
+// --- PHYSICS: Jiggle Slime ---
+class Slime {
+    constructor(color) {
+        this.color = color;
+        this.points = [];
+        this.numPoints = 10;
+        this.radius = 22;
+        this.wobble = 0;
+        for(let i=0; i<this.numPoints; i++) {
+            const angle = (i / this.numPoints) * Math.PI * 2;
+            this.points.push({
+                x: Math.cos(angle) * this.radius,
+                y: Math.sin(angle) * this.radius,
+                ox: Math.cos(angle) * this.radius,
+                oy: Math.sin(angle) * this.radius,
+                vx: 0, vy: 0
             });
         }
+    }
 
-        function connectToHost(hostId) {
-            conn = peer.connect(hostId);
-            conn.on('open', () => {
-                isHost = false;
-                addChat("System", "Connected to host! Waiting for match to begin...");
-                sendNet({type: 'join-request', name: myName});
-            });
-            conn.on('data', handleNetData);
-            conn.on('close', () => addChat("System", "Host disconnected.", "#ff4444"));
+    update(isMoving) {
+        this.wobble += 0.1;
+        const stretch = Math.sin(this.wobble) * 2;
+        this.points.forEach((p, i) => {
+            const noise = (Math.random() - 0.5) * 0.8;
+            const dx = p.ox - p.x;
+            const dy = (p.oy + (i > 5 ? stretch : -stretch)) - p.y;
+            p.vx += dx * 0.15 + noise;
+            p.vy += dy * 0.15 + noise;
+            p.x += p.vx; p.y += p.vy;
+            p.vx *= 0.75; p.vy *= 0.75;
+        });
+    }
+
+    draw(ctx, x, y, name, isLocal) {
+        ctx.beginPath();
+        ctx.moveTo(x + this.points[0].x, y + this.points[0].y);
+        for(let i=1; i<=this.numPoints; i++) {
+            const p = this.points[i % this.numPoints];
+            const prev = this.points[i-1];
+            const xc = (x + prev.x + x + p.x) / 2;
+            const yc = (y + prev.y + y + p.y) / 2;
+            ctx.quadraticCurveTo(x + prev.x, y + prev.y, xc, yc);
         }
+        ctx.fillStyle = this.color;
+        ctx.fill();
+        ctx.strokeStyle = 'white';
+        ctx.lineWidth = 3;
+        ctx.stroke();
 
-        function setupHostEvents(connection) {
-            connection.on('data', (data) => handleNetData(data, connection));
-            connection.on('close', () => {
-                // Clean up if needed
-            });
-        }
+        // Eyes (blinking effect)
+        const blink = Math.random() > 0.98 ? 0.1 : 1;
+        ctx.fillStyle = 'white';
+        ctx.beginPath();
+        ctx.ellipse(x - 7, y - 4, 4, 5 * blink, 0, 0, Math.PI*2);
+        ctx.ellipse(x + 7, y - 4, 4, 5 * blink, 0, 0, Math.PI*2);
+        ctx.fill();
+        
+        ctx.fillStyle = 'white';
+        ctx.font = 'bold 14px Segoe UI';
+        ctx.textAlign = 'center';
+        ctx.shadowBlur = 4; ctx.shadowColor = 'black';
+        ctx.fillText(isLocal ? `YOU (${name})` : name, x, y - 40);
+        ctx.shadowBlur = 0;
+    }
+}
 
-        function sendNet(data) {
-            if(isHost) {
-                Object.values(players).forEach(p => {
-                    if(p.conn && p.conn.open) p.conn.send(data);
-                });
-            } else if(conn && conn.open) {
-                conn.send(data);
-            }
-        }
-
-        function handleNetData(data, senderConn) {
-            switch(data.type) {
-                case 'join-request':
-                    if(!isHost) return;
-                    const pCount = Object.keys(players).length + 1;
-                    if(pCount >= 7) addChat("System", "Warning: 7+ players may lag.", "#ffaa00");
-                    players[senderConn.peer] = {
-                        id: senderConn.peer,
-                        name: data.name,
-                        x: Math.floor(Math.random()*gridSize),
-                        y: Math.floor(Math.random()*gridSize),
-                        color: `hsl(${Math.random()*360}, 70%, 60%)`,
-                        isAudience: false,
-                        conn: senderConn
-                    };
-                    syncAll();
-                    addChat("System", `${data.name} joined!`);
-                    break;
-                case 'sync':
-                    players = data.players || players;
-                    grid = data.grid || grid;
-                    gridSize = data.gridSize || gridSize;
-                    currentTurnId = data.currentTurnId || currentTurnId;
-                    phase = data.phase || phase;
-                    playerCrownCounts = data.playerCrownCounts || playerCrownCounts;
-                    // crownLocations NEVER synced (hidden on host only)
-                    break;
-                case 'chat':
-                    addChat(data.name, data.msg, data.color);
-                    break;
-                case 'move':
-                    if(players[data.id]) {
-                        players[data.id].x = data.x;
-                        players[data.id].y = data.y;
-                    }
-                    break;
-                case 'turn-action':
-                    if(isHost) resolveTurn(data);
-                    break;
-                case 'show-rules':
-                    document.getElementById('rules-modal').style.display = 'flex';
-                    break;
-            }
-        }
-
-        function syncAll() {
-            if(!isHost) return;
-            sendNet({
-                type: 'sync',
-                players: players,
-                grid: grid,
-                gridSize: gridSize,
-                currentTurnId: currentTurnId,
-                phase: phase,
-                playerCrownCounts: playerCrownCounts
-            });
-        }
-
-        // --- TURN RESOLUTION (HOST ONLY) ---
-        function resolveTurn(data) {
-            if(!isHost) return;
-
-            const actingId = currentTurnId;
-            const oldGrid = JSON.parse(JSON.stringify(grid));
-            grid = data.grid || grid;
-
-            // Place crown (host records secretly)
-            if(data.placedTile) {
-                const key = `${data.placedTile.x}:${data.placedTile.y}`;
-                crownLocations[key] = actingId;
-            }
-
-            // Check newly destroyed tiles for crowns
-            for(let y = 0; y < gridSize; y++) {
-                for(let x = 0; x < gridSize; x++) {
-                    if(!oldGrid[y][x].destroyed && grid[y][x].destroyed) {
-                        const key = `${x}:${y}`;
-                        if(crownLocations[key]) {
-                            const oldOwner = crownLocations[key];
-                            delete crownLocations[key];
-                            playerCrownCounts[oldOwner] = (playerCrownCounts[oldOwner] || 1) - 1;
-                            playerCrownCounts[actingId] = (playerCrownCounts[actingId] || 0) + 1;
-                            addChat("Game", `${players[oldOwner].name}'s crown has been stolen!`, "#ff4444");
-                        }
-                    }
-                }
-            }
-
-            // Check for elimination (if acting player still has 0 crowns after their turn)
-            if((playerCrownCounts[actingId] || 0) === 0) {
-                addChat("Game", `${players[actingId].name} failed to reclaim a crown and is now audience!`, "#ff4444");
-                players[actingId].isAudience = true;
-            }
-
-            passTurn();
-            checkForNewRound();
-            syncAll();
-        }
-
-        function passTurn() {
-            const activeIds = Object.keys(players).filter(id => !players[id].isAudience);
-            if(activeIds.length <= 1) {
-                if(activeIds.length === 1) addChat("Game", `${players[activeIds[0]].name} IS THE WINNER! 🏆`, "#ffcc00");
-                return;
-            }
-            let idx = activeIds.indexOf(currentTurnId);
-            currentTurnId = activeIds[(idx + 1) % activeIds.length];
-        }
-
-        function checkForNewRound() {
-            if(!isHost) return;
-            let unbroken = 0;
-            for(let y = 0; y < gridSize; y++) {
-                for(let x = 0; x < gridSize; x++) {
-                    if(!grid[y][x].destroyed) unbroken++;
-                }
-            }
-            const activeCount = Object.keys(players).filter(id => !players[id].isAudience).length;
-            if(unbroken <= activeCount * 3 + 1 && activeCount > 1) {
-                newRound();
-            }
-        }
-
-        function newRound() {
-            if(!isHost) return;
-            addChat("Game", "Tiles almost gone! Moving to a smaller map...", "#ffcc00");
-            gridSize = Math.max(8, Math.floor(gridSize * 0.7));
-            setupGrid(gridSize);
-            crownLocations = {}; // reset hidden crowns
-
-            const activeIds = Object.keys(players).filter(id => !players[id].isAudience);
-            activeIds.forEach(id => playerCrownCounts[id] = 1);
-
-            currentTurnId = activeIds[0];
-            syncAll();
-        }
-
-        function startMatch() {
-            if(!isHost) return;
-            phase = 'match';
-            Object.keys(players).forEach(id => {
-                players[id].isAudience = false;
-                playerCrownCounts[id] = 1;
-            });
-            currentTurnId = Object.keys(players)[0]; // host first
-            turnSubPhase = 'idle';
-            strikesRemaining = 3;
-            lastPlaced = null;
-            syncAll();
-            sendNet({type: 'show-rules'});
-            addChat("Game", "MATCH BEGINS! Host goes first.", "#ffcc00");
-        }
-
-        function hideRulesModal() {
-            document.getElementById('rules-modal').style.display = 'none';
-        }
-
-        // --- GAME LOGIC ---
-        function startGame(mode) {
-            myName = prompt("Enter your Name:", "Player") || "Player";
-            myName = myName.substring(0, 20);
-            myColor = `hsl(${Math.random()*360}, 70%, 60%)`;
-            
-            if(mode === 'host') {
-                isHost = true;
-                initPeer();
-                players[myId] = {
-                    id: myId, name: myName, x: 5, y: 5, 
-                    color: myColor, isAudience: false
-                };
-                setupGrid(16);
-                currentTurnId = myId;
-            } else if(mode === 'practice') {
-                alert("Practice mode: You are the only player!\n\nHost controls will appear after you load.");
-                startGame('host');
-                return;
-            }
-
-            document.getElementById('menu').style.display = 'none';
+// --- NETWORKING ---
+function initPeer(idToJoin = null) {
+    peer = new Peer();
+    
+    peer.on('open', (id) => {
+        myId = id;
+        if(idToJoin) {
+            connectToHost(idToJoin);
+        } else {
+            // Host setup
+            players[myId] = {
+                id: myId, name: myName, x: 2, y: 2, 
+                color: myColor, isAudience: false
+            };
+            const fullUrl = `${window.location.origin}${window.location.pathname}?join=${id}`;
+            document.getElementById('connection-status').innerHTML = 
+                `ID: <strong>${id}</strong> | <a href="${fullUrl}" target="_blank" style="color:var(--primary)">INVITE LINK</a>`;
+            window.history.replaceState({}, '', `?join=${id}`);
             gameActive = true;
             loop();
         }
+    });
 
-        function setupGrid(size) {
-            gridSize = size;
-            grid = [];
-            for(let y=0; y<size; y++) {
-                grid[y] = [];
-                for(let x=0; x<size; x++) {
-                    grid[y][x] = { hits: 0, destroyed: false };
-                }
-            }
-        }
+    peer.on('connection', (c) => {
+        if(!isHost) return;
+        c.on('open', () => setupHostEvents(c));
+    });
+}
 
-        function handleInput(e) {
-            if(!gameActive || phase !== 'prematch' && currentTurnId !== myId) return;
-            const p = players[myId];
-            if(!p) return;
+function connectToHost(hostId) {
+    conn = peer.connect(hostId);
+    conn.on('open', () => {
+        isHost = false;
+        addChat("System", "Connected! Sending join request...");
+        sendNet({type: 'join-request', name: myName, color: myColor});
+        gameActive = true;
+        loop();
+    });
+    conn.on('data', handleNetData);
+}
 
-            let nx = p.x, ny = p.y;
-            if(e.key === 'w' || e.key === 'ArrowUp') ny--;
-            if(e.key === 's' || e.key === 'ArrowDown') ny++;
-            if(e.key === 'a' || e.key === 'ArrowLeft') nx--;
-            if(e.key === 'd' || e.key === 'ArrowRight') nx++;
+function setupHostEvents(connection) {
+    connection.on('data', (data) => handleNetData(data, connection));
+}
 
-            if(nx >= 0 && nx < gridSize && ny >= 0 && ny < gridSize) {
-                if(!grid[ny][nx].destroyed) {
-                    p.x = nx; p.y = ny;
-                    sendNet({type: 'move', id: myId, x: nx, y: ny});
-                }
-            }
-        }
+function sendNet(data) {
+    if(isHost) {
+        Object.values(players).forEach(p => { if(p.conn) p.conn.send(data); });
+    } else if(conn && conn.open) {
+        conn.send(data);
+    }
+}
 
-        window.addEventListener('keydown', handleInput);
-
-        // --- RENDER LOOP ---
-        const slimes = {};
-
-        function loop() {
-            if(!gameActive) return;
-            update();
-            draw();
-            requestAnimationFrame(loop);
-        }
-
-        function update() {
-            // Orientation & mobile
-            const isPortrait = window.innerHeight > window.innerWidth;
-            document.getElementById('rotate-prompt').style.display = isPortrait ? 'flex' : 'none';
-            document.getElementById('mobile-controls').style.display = ('ontouchstart' in window) ? 'block' : 'none';
-
-            // Host controls (pre-match only)
-            document.getElementById('host-controls').style.display = (isHost && phase === 'prematch') ? 'block' : 'none';
-            if(isHost && phase === 'prematch') {
-                document.getElementById('player-count').innerText = `Players: ${Object.keys(players).length}`;
-            }
-
-            // Current turn panel (ALL players see)
-            const showTurnPanel = phase === 'match';
-            document.getElementById('current-turn-panel').style.display = showTurnPanel ? 'block' : 'none';
-            if(showTurnPanel && players[currentTurnId]) {
-                document.getElementById('current-player-name').innerText = players[currentTurnId].name;
-            }
-
-            // Player list / crowns panel
-            const showList = phase === 'match';
-            document.getElementById('player-list').style.display = showList ? 'block' : 'none';
-            if(showList) {
-                let html = '';
-                Object.values(players).forEach(p => {
-                    const count = playerCrownCounts[p.id] || 0;
-                    const status = p.isAudience ? ' (Audience)' : '';
-                    html += `<div style="margin: 4px 0; color: ${p.color};">${p.name}${status}: ${count} 👑</div>`;
-                });
-                document.getElementById('player-list-content').innerHTML = html;
-            }
-
-            // Turn UI for current player
-            const isMyTurn = phase === 'match' && currentTurnId === myId;
-            document.getElementById('turn-overlay').style.display = isMyTurn ? 'block' : 'none';
-
-            if(isMyTurn) {
-                const myCrowns = playerCrownCounts[myId] || 0;
-                if(turnSubPhase === 'idle') {
-                    turnSubPhase = (myCrowns > 0) ? 'placingCrown' : 'striking';
-                    strikesRemaining = 3;
-                }
-                let instr = turnSubPhase === 'placingCrown' ? "PLACE YOUR CROWN" : "STRIKE UP TO 3 TILES";
-                if(myCrowns === 0) instr = "RECLAIM MODE — STRIKE 3 TILES!";
-                document.getElementById('turn-instruction').innerText = instr;
-            }
-
-            // Physics
-            Object.values(players).forEach(p => {
-                if(!slimes[p.id]) slimes[p.id] = new Slime(p.color);
-                slimes[p.id].update(false);
-            });
-        }
-
-        function draw() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-            
-            const me = players[myId];
-            if(!me) return;
-
-            // Camera (normal follow OR safe-zone for audience)
-            let camX = canvas.width/2 - (me.x * TILE_SIZE);
-            let camY = canvas.height/2 - (me.y * TILE_SIZE);
-            const isAudienceView = phase === 'match' && currentTurnId !== myId;
-            if(isAudienceView) {
-                // Tiny 3x3 safe zone view
-                camX = canvas.width/2 - (1 * TILE_SIZE);
-                camY = canvas.height/2 - (1 * TILE_SIZE);
-            }
-
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.save();
-            ctx.translate(camX, camY);
-
-            // Draw Grid
-            for(let y=0; y<gridSize; y++) {
-                for(let x=0; x<gridSize; x++) {
-                    const tile = grid[y][x];
-                    ctx.fillStyle = tile.destroyed ? '#000' : ((x+y)%2===0 ? '#222' : '#282828');
-                    ctx.fillRect(x*TILE_SIZE, y*TILE_SIZE, TILE_SIZE-2, TILE_SIZE-2);
-                    
-                    if(tile.hits === 1) {
-                        ctx.strokeStyle = 'rgba(255,0,0,0.5)';
-                        ctx.lineWidth = 4;
-                        ctx.strokeRect(x*TILE_SIZE+5, y*TILE_SIZE+5, TILE_SIZE-12, TILE_SIZE-12);
-                    }
-                }
-            }
-
-            // Draw Players (active player invisible to others)
-            Object.values(players).forEach(p => {
-                if(phase === 'match' && currentTurnId !== myId && p.id === currentTurnId) return;
-                
-                const slime = slimes[p.id];
-                if(slime) {
-                    const drawX = p.x * TILE_SIZE + TILE_SIZE/2;
-                    const drawY = p.y * TILE_SIZE + TILE_SIZE/2;
-                    slime.draw(ctx, drawX, drawY, p.name);
-                }
-            });
-
-            ctx.restore();
-
-            // Audience safe-zone overlay
-            if(isAudienceView) {
-                ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-                ctx.fillStyle = 'white';
-                ctx.font = 'bold 32px sans-serif';
-                ctx.textAlign = 'center';
-                ctx.fillText(`WAITING FOR ${players[currentTurnId] ? players[currentTurnId].name.toUpperCase() : 'PLAYER'}'S TURN`, canvas.width/2, canvas.height/2 - 60);
-                ctx.font = 'bold 24px sans-serif';
-                ctx.fillText('YOU ARE IN THE 3×3 SAFE ZONE', canvas.width/2, canvas.height/2 + 20);
-            }
-        }
-
-        // --- CHAT SYSTEM ---
-        const chatInput = document.getElementById('chat-input');
-        const chatHistory = document.getElementById('chat-history');
-
-        chatInput.addEventListener('keypress', (e) => {
-            if(e.key === 'Enter' && chatInput.value.trim() !== "") {
-                const msg = chatInput.value;
-                const colorToUse = myColor || '#ffcc00';
-                sendNet({type: 'chat', name: myName, msg: msg, color: colorToUse});
-                addChat(myName, msg, colorToUse);
-                chatInput.value = "";
-                chatInput.blur();
-            }
-        });
-
-        function addChat(name, msg, color = "#ffcc00") {
-            const div = document.createElement('div');
-            div.innerHTML = `<span style="color:${color}; font-weight:bold">${name}:</span> ${msg}`;
-            chatHistory.appendChild(div);
-            chatHistory.scrollTop = chatHistory.scrollHeight;
-        }
-
-        // --- TURN ACTIONS ---
-        canvas.addEventListener('mousedown', (e) => {
-            if(phase !== 'match' || currentTurnId !== myId) return;
-            
-            const me = players[myId];
-            const camX = canvas.width/2 - (me.x * TILE_SIZE);
-            const camY = canvas.height/2 - (me.y * TILE_SIZE);
-            
-            const worldX = Math.floor((e.clientX - camX) / TILE_SIZE);
-            const worldY = Math.floor((e.clientY - camY) / TILE_SIZE);
-
-            if(worldX < 0 || worldX >= gridSize || worldY < 0 || worldY >= gridSize) return;
-            if(grid[worldY][worldX].destroyed) return;
-
-            const myCrowns = playerCrownCounts[myId] || 0;
-
-            if(turnSubPhase === 'placingCrown' && myCrowns > 0) {
-                lastPlaced = {x: worldX, y: worldY};
-                turnSubPhase = 'striking';
-                strikesRemaining = 3;
-                addChat("Game", "Crown placed! Now strike up to 3 tiles.");
-            } else if(turnSubPhase === 'striking' && strikesRemaining > 0) {
-                grid[worldY][worldX].hits++;
-                if(grid[worldY][worldX].hits >= 2) grid[worldY][worldX].destroyed = true;
-                strikesRemaining--;
-                addChat("Game", `Strikes left: ${strikesRemaining}`);
-            }
-        });
-
-        document.getElementById('btn-end-turn').onclick = () => {
-            if(phase !== 'match' || currentTurnId !== myId) return;
-
-            const dataForResolve = {
-                grid: grid,
-                placedTile: lastPlaced
+function handleNetData(data, senderConn) {
+    switch(data.type) {
+        case 'join-request':
+            if(!isHost) return;
+            players[senderConn.peer] = {
+                id: senderConn.peer, name: data.name,
+                x: Math.floor(Math.random()*gridSize), y: Math.floor(Math.random()*gridSize),
+                color: data.color, isAudience: false, conn: senderConn
             };
+            addChat("System", `${data.name} joined!`);
+            syncAll();
+            break;
+        case 'sync':
+            players = data.players;
+            grid = data.grid;
+            gridSize = data.gridSize;
+            currentTurnId = data.currentTurnId;
+            phase = data.phase;
+            playerCrownCounts = data.playerCrownCounts;
+            break;
+        case 'chat':
+            addChat(data.name, data.msg, data.color);
+            break;
+        case 'move':
+            if(players[data.id]) { players[data.id].x = data.x; players[data.id].y = data.y; }
+            break;
+        case 'show-rules':
+            document.getElementById('rules-modal').style.display = 'flex';
+            break;
+    }
+}
 
-            if(isHost) {
-                resolveTurn(dataForResolve);
-            } else {
-                sendNet({type: 'turn-action', grid: grid, placedTile: lastPlaced});
-            }
+function syncAll() {
+    if(!isHost) return;
+    sendNet({
+        type: 'sync', players: players, grid: grid,
+        gridSize: gridSize, currentTurnId: currentTurnId,
+        phase: phase, playerCrownCounts: playerCrownCounts
+    });
+}
 
-            // Local reset
-            strikesRemaining = 3;
-            lastPlaced = null;
-            turnSubPhase = 'idle';
-        };
+// --- GAME ACTIONS ---
+function startGame(mode) {
+    myName = prompt("Enter Name:", "Slime_" + Math.floor(Math.random()*999)) || "Player";
+    myColor = `hsl(${Math.random()*360}, 75%, 65%)`;
+    
+    if(mode === 'host') {
+        isHost = true;
+        setupGrid(12);
+        initPeer();
+    }
+    document.getElementById('menu').style.display = 'none';
+}
 
-        // --- INITIALIZATION ---
-        const urlParams = new URLSearchParams(window.location.search);
-        const joinId = urlParams.get('join');
-        if(joinId) {
-            document.getElementById('menu-buttons').innerHTML = `<button class="btn" onclick="startGameJoin()">JOIN SESSION</button>`;
-            window.startGameJoin = function() {
-                myName = prompt("Enter Name:", "Player") || "Player";
-                myName = myName.substring(0, 20);
-                initPeer(joinId);
-                document.getElementById('menu').style.display = 'none';
-            };
+function startGameJoin() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const joinId = urlParams.get('join');
+    myName = prompt("Enter Name:", "Guest") || "Guest";
+    myColor = `hsl(${Math.random()*360}, 75%, 65%)`;
+    initPeer(joinId);
+    document.getElementById('menu').style.display = 'none';
+}
+
+function setupGrid(size) {
+    gridSize = size;
+    grid = [];
+    for(let y=0; y<size; y++) {
+        grid[y] = [];
+        for(let x=0; x<size; x++) grid[y][x] = { hits: 0, destroyed: false };
+    }
+}
+
+function startMatch() {
+    if(!isHost) return;
+    phase = 'match';
+    Object.keys(players).forEach(id => {
+        players[id].isAudience = false;
+        playerCrownCounts[id] = 1;
+    });
+    currentTurnId = myId;
+    syncAll();
+    sendNet({type: 'show-rules'});
+    addChat("Game", "MATCH STARTED! Choose where to hide your crown.", "#ffcc00");
+}
+
+function handleInput(e) {
+    if(!gameActive || !myId || !players[myId]) return;
+    // Only allow free movement in prematch or if it's your turn
+    if(phase === 'match' && currentTurnId !== myId) return;
+
+    const p = players[myId];
+    let nx = p.x, ny = p.y;
+    const key = e.key ? e.key.toLowerCase() : e;
+
+    if(key === 'w' || key === 'arrowup') ny--;
+    if(key === 's' || key === 'arrowdown') ny++;
+    if(key === 'a' || key === 'arrowleft') nx--;
+    if(key === 'd' || key === 'arrowright') nx++;
+
+    if(nx >= 0 && nx < gridSize && ny >= 0 && ny < gridSize) {
+        if(!grid[ny][nx].destroyed) {
+            p.x = nx; p.y = ny;
+            sendNet({type: 'move', id: myId, x: nx, y: ny});
+        }
+    }
+}
+
+// --- RENDER LOOP ---
+function loop() {
+    update();
+    draw();
+    requestAnimationFrame(loop);
+}
+
+function update() {
+    const isPortrait = window.innerHeight > window.innerWidth;
+    document.getElementById('rotate-prompt').style.display = isPortrait ? 'flex' : 'none';
+
+    if(isHost && phase === 'prematch') {
+        document.getElementById('host-controls').style.display = 'block';
+        document.getElementById('player-count').innerText = `Players: ${Object.keys(players).length}`;
+    } else {
+        document.getElementById('host-controls').style.display = 'none';
+    }
+
+    // UI Updates
+    if(phase === 'match') {
+        document.getElementById('current-turn-panel').style.display = 'block';
+        document.getElementById('player-list').style.display = 'block';
+        if(players[currentTurnId]) {
+            document.getElementById('current-player-name').innerText = players[currentTurnId].name;
         }
 
-        // Expose startMatch for host button
-        window.startMatch = startMatch;
-        window.hideRulesModal = hideRulesModal;
+        const isMyTurn = currentTurnId === myId;
+        document.getElementById('turn-overlay').style.display = isMyTurn ? 'block' : 'none';
+        
+        if(isMyTurn) {
+            const count = playerCrownCounts[myId] || 0;
+            if(turnSubPhase === 'idle') turnSubPhase = count > 0 ? 'placing' : 'striking';
+            document.getElementById('turn-instruction').innerText = 
+                turnSubPhase === 'placing' ? "STEP 1: HIDE YOUR CROWN (Click tile)" : `STEP 2: SMASH TILES (${strikesRemaining} left)`;
+        }
+    }
+
+    // Slime Physics
+    Object.values(players).forEach(p => {
+        if(!slimes[p.id]) slimes[p.id] = new Slime(p.color);
+        slimes[p.id].update();
+    });
+}
+
+function draw() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    
+    if(!myId || !players[myId]) {
+        ctx.fillStyle = '#000';
+        ctx.fillRect(0,0,canvas.width, canvas.height);
+        return;
+    }
+
+    const me = players[myId];
+    let camX = canvas.width/2 - (me.x * TILE_SIZE);
+    let camY = canvas.height/2 - (me.y * TILE_SIZE);
+
+    const isWaiting = phase === 'match' && currentTurnId !== myId;
+    if(isWaiting) { camX = canvas.width/2 - (1 * TILE_SIZE); camY = canvas.height/2 - (1 * TILE_SIZE); }
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.save();
+    ctx.translate(camX, camY);
+
+    // Grid
+    for(let y=0; y<gridSize; y++) {
+        for(let x=0; x<gridSize; x++) {
+            const tile = grid[y][x];
+            ctx.fillStyle = tile.destroyed ? '#09090b' : ((x+y)%2===0 ? '#1e1e26' : '#252530');
+            ctx.fillRect(x*TILE_SIZE, y*TILE_SIZE, TILE_SIZE-2, TILE_SIZE-2);
+            if(tile.hits === 1) {
+                ctx.strokeStyle = '#ff4444'; ctx.lineWidth = 2;
+                ctx.strokeRect(x*TILE_SIZE+8, y*TILE_SIZE+8, TILE_SIZE-16, TILE_SIZE-16);
+            }
+        }
+    }
+
+    // Players
+    Object.values(players).forEach(p => {
+        // HIDE the active player from others during their turn for mystery
+        if(phase === 'match' && currentTurnId === p.id && myId !== p.id) return;
+        if(slimes[p.id]) {
+            slimes[p.id].draw(ctx, p.x*TILE_SIZE + 32, p.y*TILE_SIZE + 32, p.name, p.id === myId);
+        }
+    });
+
+    ctx.restore();
+
+    if(isWaiting) {
+        ctx.fillStyle = 'rgba(0,0,0,0.85)';
+        ctx.fillRect(0,0,canvas.width, canvas.height);
+        ctx.fillStyle = 'white'; ctx.textAlign = 'center';
+        ctx.font = '24px Segoe UI';
+        ctx.fillText(`WAITING FOR ${players[currentTurnId]?.name.toUpperCase()}`, canvas.width/2, canvas.height/2);
+    }
+}
+
+// --- TURN ACTIONS ---
+canvas.addEventListener('mousedown', (e) => {
+    if(phase !== 'match' || currentTurnId !== myId) return;
+    const me = players[myId];
+    const camX = canvas.width/2 - (me.x * TILE_SIZE);
+    const camY = canvas.height/2 - (me.y * TILE_SIZE);
+    const wx = Math.floor((e.clientX - camX) / TILE_SIZE);
+    const wy = Math.floor((e.clientY - camY) / TILE_SIZE);
+
+    if(wx < 0 || wx >= gridSize || wy < 0 || wy >= gridSize || grid[wy][wx].destroyed) return;
+
+    if(turnSubPhase === 'placing') {
+        lastPlaced = {x: wx, y: wy};
+        turnSubPhase = 'striking';
+        addChat("Game", "Crown hidden! Now strike.");
+    } else if(turnSubPhase === 'striking' && strikesRemaining > 0) {
+        grid[wy][wx].hits++;
+        if(grid[wy][wx].hits >= 2) grid[wy][wx].destroyed = true;
+        strikesRemaining--;
+        if(strikesRemaining <= 0) addChat("Game", "No strikes left. End your turn.");
+    }
+});
+
+document.getElementById('btn-end-turn').onclick = () => {
+    if(isHost) {
+        // Basic host resolution (expand this based on your specific rules)
+        passTurn();
+    } else {
+        sendNet({type: 'turn-action', grid: grid, placedTile: lastPlaced});
+    }
+    turnSubPhase = 'idle'; strikesRemaining = 3; lastPlaced = null;
+};
+
+function passTurn() {
+    const ids = Object.keys(players).filter(id => !players[id].isAudience);
+    let idx = ids.indexOf(currentTurnId);
+    currentTurnId = ids[(idx + 1) % ids.length];
+    syncAll();
+}
+
+window.addEventListener('keydown', handleInput);
+window.startGame = startGame;
+window.startGameJoin = startGameJoin;
+window.startMatch = startMatch;
+window.hideRulesModal = () => document.getElementById('rules-modal').style.display='none';
+
+// Check for join link on load
+if(new URLSearchParams(window.location.search).get('join')) {
+    document.getElementById('menu-buttons').innerHTML = `<button class="btn" onclick="startGameJoin()">JOIN GAME</button>`;
+}
+
+const chatInput = document.getElementById('chat-input');
+chatInput.addEventListener('keypress', (e) => {
+    if(e.key === 'Enter' && chatInput.value.trim()) {
+        sendNet({type: 'chat', name: myName, msg: chatInput.value, color: myColor});
+        addChat(myName, chatInput.value, myColor);
+        chatInput.value = ''; chatInput.blur();
+    }
+});
+
+function addChat(name, msg, color) {
+    const div = document.createElement('div');
+    div.innerHTML = `<span style="color:${color}">${name}:</span> ${msg}`;
+    const hist = document.getElementById('chat-history');
+    hist.appendChild(div); hist.scrollTop = hist.scrollHeight;
+}
     </script>
 </body>
 </html>
