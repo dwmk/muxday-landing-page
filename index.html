@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MuxDay</title>
+  <meta name="keywords" content="muxday, huanmux, muxday.com, muxday website"/>
+<meta name="author" content="Mukto"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="theme-color" content="#8be8cb">
+
+<link rel="icon" type="image/png" href="https://muktoverse.vercel.app/asset/images/favicon.png" sizes="32x32">
+<link rel="icon" type="image/png" href="https://muktoverse.vercel.app/asset/images/favicon.png" sizes="16x16">
+<link rel="apple-touch-icon" sizes="180x180" href="https://muktoverse.vercel.app/asset/images/favicon.png">
+<meta property="og:image" content="https://muxday.com/ogimage-mukto.png"/>
+<meta property="og:image:width" content="1200"/>
+<meta property="og:image:height" content="630"/>
+
+
+<meta property="og:title" content="MuxDay"/>
+<meta property="og:description" content=""/>
+<meta property="og:site_name" content="MuxDay"/>
+<meta property="og:type" content="website"/>
+
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:site" content="@the_mukto"/>
+<meta name="twitter:title" content="MuxDay"/>
+<meta name="twitter:image" content="https://muxday.com/ogimage-mukto.png"/>
+<meta name="twitter:description" content=""/>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/iconify-icon@2/dist/iconify-icon.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Climate+Crisis:YEAR@1979&display=swap" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+
+        .climate-crisis-muxday { 
+            font-family: "Climate Crisis", sans-serif; 
+            font-optical-sizing: auto; 
+            font-weight: 400; 
+            font-style: normal; 
+            font-variation-settings: "YEAR" 1979; 
+        }
+
+        :root {
+            --accent-teal: #8be8cb;
+            --accent-blue: #7ea2aa;
+            --accent-gray: #888da7;
+            --accent-purple: #9c7a97;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', system_ui, sans-serif;
+            cursor: url('https://huanmux.github.io/assets/image/diamond-cursor.cur'), auto;
+        }
+
+        /* Dot Matrix Background */
+        .dot-matrix {
+            background-image: 
+                radial-gradient(circle at 2px 2px, rgba(139, 232, 203, 0.08) 1px, transparent 0),
+                radial-gradient(circle at 22px 22px, rgba(126, 162, 170, 0.06) 1px, transparent 0);
+            background-size: 24px 24px;
+        }
+
+        /* Plasma Background Animation */
+        .plasma-bg {
+            background: linear-gradient(45deg, #303633, #1f2421, #303633);
+            background-size: 400% 400%;
+            animation: plasma 25s ease infinite;
+        }
+
+        @keyframes plasma {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Micro Texture Overlay */
+        .texture {
+            position: relative;
+        }
+        .texture::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%22100%22 viewBox=%220 0 100 100%22%3E%3Cfilter id=%22n%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.7%22 numOctaves=%223%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%22 height=%22100%22 filter=%22url(%23n)%22 opacity=%220.04%22/%3E%3C/svg%27') repeat;
+            pointer-events: none;
+            z-index: 1;
+            mix-blend-mode: overlay;
+        }
+
+        /* Shimmer Effect */
+        .shimmer-card {
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.15s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+        .shimmer-card::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 40%;
+            height: 300%;
+            background: linear-gradient(
+                120deg,
+                transparent,
+                rgba(255,255,255,0.25),
+                transparent
+            );
+            transform: skewX(-25deg);
+            animation: shimmer 3s infinite;
+            pointer-events: none;
+        }
+        @keyframes shimmer {
+            0% { transform: translateX(-150%) skewX(-25deg); }
+            100% { transform: translateX(400%) skewX(-25deg); }
+        }
+
+        /* Superior Hover & Click Effects */
+        .brand-card:hover, .app-card:hover, .game-card:hover {
+            box-shadow: 0 0 60px -15px var(--accent-teal);
+            transform: scale(1.03) !important;
+        }
+        .brand-card:active, .app-card:active, .game-card:active {
+            transform: scale(0.96) !important;
+        }
+
+        /* Section Headers */
+        .section-header {
+            position: relative;
+            display: inline-block;
+        }
+
+        /* MacOS-style Navbar (Dark Frosted Glass) */
+        .mac-nav {
+            background: rgba(20, 24, 22, 0.65);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        /* Cinematic Fade-In Slide-Up for Hero Title */
+        .hero-title {
+            letter-spacing: -0.05em;
+            color: #ffffff;
+            opacity: 0;
+            transform: translateY(80px);
+            animation: fadeSlideUp 1.8s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+        }
+        @keyframes fadeSlideUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Squircle Frames — circumscribed inner crop + white bg (except Asenturisk) */
+        .squircle-frame {
+            width: 118px;
+            height: 118px;
+            background: #ffffff;
+            border-radius: 46px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            box-shadow: 0 0 30px -10px #8be8cb;
+            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .squircle-frame:hover {
+            transform: scale(1.12) rotate(2deg);
+        }
+
+        /* Virtual Guide */
+        #guide-overlay {
+            position: fixed; inset: 0; z-index: 9998;
+            background: transparent; backdrop-filter: none;
+            transition: background 0.5s, backdrop-filter 0.5s;
+        }
+        #guide-overlay.blur-active {
+            background: rgba(0,0,0,0.6); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+        }
+        #guide-overlay.hidden-layer { display: none; }
+        
+        #virtual-guide.pop-up {
+            animation: bouncyPopUp 0.8s cubic-bezier(0.28, 0.84, 0.42, 1) forwards;
+        }
+        #virtual-guide.slide-down {
+            transform: translateY(400px);
+            opacity: 0;
+            transition: all 0.6s cubic-bezier(0.55, 0.085, 0.68, 0.53);
+        }
+
+        @keyframes bouncyPopUp {
+            0% { transform: translateY(400px) scale(0.5); opacity: 0; }
+            60% { transform: translateY(-20px) scale(1.05); opacity: 1; }
+            80% { transform: translateY(10px) scale(0.95); }
+            100% { transform: translateY(0) scale(1); opacity: 1; }
+        }
+
+        .guide-bubble {
+            background: #ffffff; color: #1f2421; padding: 14px 20px; border-radius: 24px;
+            border-bottom-left-radius: 4px; font-weight: 600; font-size: 14px;
+            max-width: 260px; margin-bottom: 12px; margin-left: 20px;
+            box-shadow: 0 12px 30px rgba(0,0,0,0.4);
+            opacity: 0; transform: scale(0.8) translateY(10px) origin-bottom-left; 
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .guide-bubble.show { opacity: 1; transform: scale(1) translateY(0); }
+    </style>
+</head>
+<body class="bg-[#303633] text-white dot-matrix overflow-x-hidden">
+
+    <nav class="fixed top-6 left-0 right-0 z-50 flex justify-center px-4">
+        <div class="mac-nav max-w-[860px] mx-auto px-6 py-4 flex flex-col items-center justify-between rounded-3xl w-full shadow-2xl transition-all duration-300">
+            <div class="flex items-center justify-between w-full">
+                <div class="flex items-center gap-x-3">
+                    <iconify-icon icon="solar:widget-6-bold-duotone" class="text-4xl text-[#8be8cb]"></iconify-icon>
+                    <span class="text-3xl tracking-tighter font-semibold text-white">MuxDay</span>
+                </div>
+                
+                <div class="hidden md:flex items-center gap-x-10 text-sm font-medium">
+                </div>
+
+                <button onclick="toggleMobileMenu()" class="md:hidden text-3xl text-white focus:outline-none flex items-center justify-center">
+                    <iconify-icon icon="solar:hamburger-menu-linear"></iconify-icon>
+                </button>
+            </div>
+            
+            <div id="mobile-menu" class="hidden flex-col items-center gap-y-4 pt-6 pb-2 text-sm font-medium w-full md:hidden">
+            </div>
+        </div>
+    </nav>
+
+    <header class="bg-[#303633] dot-matrix texture min-h-screen flex items-center justify-center relative">
+        <div class="absolute inset-0 bg-[radial-gradient(circle_at_center,#00000090_30%,transparent)]"></div>
+        
+        <div class="text-center relative z-10 px-6">
+            <h1 class="hero-title climate-crisis-muxday text-[clamp(4rem,14vw,9.5rem)]">MuxDay</h1>
+<p class="mt-4 mx-auto max-w-2xl text-[#888da7] text-sm md:text-base leading-relaxed opacity-80">
+                MuxDay Excite is a social platform that prioritizes user concerns and treats every individual uniquely unlike other big tech corporations out there which steal and sell data.
+            </p>
+            <a href="https://muxday.com/app" 
+   class="inline-block mt-10 px-10 py-4 bg-[#8be8cb] hover:bg-white text-[#303633] font-semibold text-xl rounded-3xl tracking-tighter shadow-2xl transition-all active:scale-95">
+  Launch Platform ►
+</a>
+
+<div class="mt-8 flex justify-center gap-4">
+                <a href="https://muxday.com/app/terms-of-service" target="_blank" rel="noopener noreferrer"
+                   class="px-6 py-2 rounded-full border border-[#7ea2aa]/40 text-[#888da7] text-sm font-medium hover:text-white hover:border-[#8be8cb] hover:bg-[#8be8cb]/10 hover:-translate-y-1 transition-all duration-300 backdrop-blur-sm">
+                    Terms of Service
+                </a>
+                <a href="https://muxday.com/app/privacy-policy" target="_blank" rel="noopener noreferrer"
+                   class="px-6 py-2 rounded-full border border-[#7ea2aa]/40 text-[#888da7] text-sm font-medium hover:text-white hover:border-[#8be8cb] hover:bg-[#8be8cb]/10 hover:-translate-y-1 transition-all duration-300 backdrop-blur-sm">
+                    Privacy Policy
+                </a>
+            </div>
+        </div>
+
+        <div class="absolute bottom-12 left-1/2 -translate-x-1/2 flex flex-col items-center gap-y-2 text-[#888da7] opacity-70">
+        </div>
+    </header>
+
+    <footer class="py-12 bg-[#303633] border-t border-[#7ea2aa]/20 text-center">
+        <div class="text-xs font-mono text-[#888da7]">
+           © Mukto 2026
+        </div>
+    </footer>
+  <style>body{margin:0;overflow:hidden}#intro{position:fixed;top:0;left:0;width:100vw;height:100vh;background:black;display:flex;justify-content:center;align-items:center;z-index:9999;opacity:1;animation:fadeOut .5s ease-in-out forwards;animation-delay:0.5s}#intro img{width:150px;animation:pulse 1s infinite}@keyframes pulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.01);opacity:.7}}@keyframes fadeOut{from{opacity:1}to{opacity:0;visibility:hidden}}</style><div id="intro"><img src="https://muktoverse.vercel.app/asset/images/classic_logo.png" alt="Logo"></div><script>document.getElementById("intro").addEventListener("animationend",()=>{document.getElementById("intro").style.display="none";document.body.style.overflow="auto"});</script>
+<img src="https://canarytokens.com/articles/73k51gsjj0485boupcqv8jddy/contact.jpg" width="0px" height="0px" />
+</body>
+</html>
