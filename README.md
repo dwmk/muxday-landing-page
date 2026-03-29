@@ -3,7 +3,7 @@ Redirector
 |Source|Destination|
 |:---|:---|
 |`/file/path` | `/file/path`|
-|`/app` | app.muxday.com|
-| `/app/path` | app.muxday.com`/path`|
-|`/@var` | app.muxday.com`?user=var`|
-| `/@var/path` | app.muxday.com`/path?user=var`|
+|`/app` | muxday.web.app|
+| `/app/path` | muxday.web.app`/path`|
+|`/@var` | muxday.web.app`?user=var`|
+| `/@var/path` | muxday.web.app`/path?user=var`|
