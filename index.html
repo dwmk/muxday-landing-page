@@ -12,7 +12,7 @@
 <link rel="icon" type="image/png" href="https://muktoverse.vercel.app/asset/images/favicon.png" sizes="32x32">
 <link rel="icon" type="image/png" href="https://muktoverse.vercel.app/asset/images/favicon.png" sizes="16x16">
 <link rel="apple-touch-icon" sizes="180x180" href="https://muktoverse.vercel.app/asset/images/favicon.png">
-<meta property="og:image" content="https://muxday.com/ogimage-mukto.png"/>
+<meta property="og:image" content="https://muxday.com/public/ogimage.png"/>
 <meta property="og:image:width" content="1200"/>
 <meta property="og:image:height" content="630"/>
 
@@ -25,7 +25,7 @@
 <meta name="twitter:card" content="summary_large_image"/>
 <meta name="twitter:site" content="@the_mukto"/>
 <meta name="twitter:title" content="MuxDay"/>
-<meta name="twitter:image" content="https://muxday.com/ogimage-mukto.png"/>
+<meta name="twitter:image" content="https://muxday.com/public/ogimage.png"/>
 <meta name="twitter:description" content=""/>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/iconify-icon@2/dist/iconify-icon.min.js"></script>
@@ -211,10 +211,164 @@
             transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
         .guide-bubble.show { opacity: 1; transform: scale(1) translateY(0); }
+      /* --- SECTION 1: 3D Stack Deck --- */
+.card-stack {
+    position: relative;
+    width: 260px;
+    height: 540px;
+    perspective: 1200px;
+}
+.card-stack img {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 32px;
+    box-shadow: -15px 15px 35px rgba(0, 0, 0, 0.6);
+    border: 1px solid rgba(139, 232, 203, 0.2);
+    transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.6s ease;
+}
+.stack-0 { transform: translateX(0) scale(1) translateZ(0); z-index: 4; opacity: 1; }
+.stack-1 { transform: translateX(40px) scale(0.9) translateZ(-50px); z-index: 3; opacity: 0.8; }
+.stack-2 { transform: translateX(80px) scale(0.8) translateZ(-100px); z-index: 2; opacity: 0.5; }
+.stack-hidden { transform: translateX(120px) scale(0.7) translateZ(-150px); z-index: 1; opacity: 0; pointer-events: none; }
+
+/* --- SECTION 2: Scanline Theme Switcher --- */
+.scanline-container {
+    position: relative;
+    width: 260px;
+    height: 540px;
+    border-radius: 32px;
+    overflow: hidden;
+    border: 1px solid rgba(139, 232, 203, 0.2);
+    box-shadow: 0 0 40px -10px rgba(139, 232, 203, 0.3);
+}
+.scanline-img {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    object-fit: cover;
+}
+.scanline-next {
+    clip-path: inset(0 100% 0 0);
+}
+.scan-bar {
+    position: absolute;
+    top: 0; bottom: 0; left: 0;
+    width: 4px;
+    background: var(--accent-teal);
+    box-shadow: 0 0 20px 8px rgba(139, 232, 203, 0.6);
+    transform: translateX(-100%);
+    z-index: 10;
+    display: none;
+}
+.is-scanning .scanline-next {
+    animation: wipeReveal 1.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+.is-scanning .scan-bar {
+    display: block;
+    animation: scanMove 1.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+@keyframes wipeReveal {
+    0% { clip-path: inset(0 100% 0 0); }
+    100% { clip-path: inset(0 0 0 0); }
+}
+@keyframes scanMove {
+    0% { left: 0%; opacity: 1;}
+    90% { opacity: 1; }
+    100% { left: 100%; opacity: 0; }
+}
+
+/* --- SECTION 3: Infinite Marquee --- */
+.marquee-wrapper {
+    overflow: hidden;
+    white-space: nowrap;
+    width: 100%;
+    position: relative;
+    padding: 2rem 0;
+}
+.marquee-wrapper::before, .marquee-wrapper::after {
+    content: '';
+    position: absolute;
+    top: 0; bottom: 0;
+    width: 15vw;
+    z-index: 2;
+    pointer-events: none;
+}
+.marquee-wrapper::before { left: 0; background: linear-gradient(to right, #303633, transparent); }
+.marquee-wrapper::after { right: 0; background: linear-gradient(to left, #303633, transparent); }
+.marquee-content {
+    display: inline-flex;
+    gap: 2rem;
+    animation: swimLeft 35s linear infinite;
+}
+.marquee-content:hover { animation-play-state: paused; }
+.marquee-img {
+    height: 340px;
+    border-radius: 20px;
+    border: 1px solid rgba(255,255,255,0.1);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+    transition: transform 0.3s ease;
+}
+.marquee-img:hover { transform: scale(1.02); }
+@keyframes swimLeft {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); /* Moves exactly half the width to seamlessly loop the duplicated array */ }
+}
+      /* Vinyl Spinning Animation */
+@keyframes spin-vinyl {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+.spinning {
+    animation: spin-vinyl 2.5s linear infinite;
+}
+      /* Socialize Pop-up Styles */
+#social-popup-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 10000; /* Above everything else */
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.5s ease, visibility 0.5s;
+}
+
+.popup-content {
+    background: rgba(24, 26, 27, 0.9);
+    border: 1px solid rgba(139, 232, 203, 0.3);
+    padding: 2.5rem;
+    border-radius: 2rem;
+    text-align: center;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+    transform: scale(0.9);
+    animation: popupAppear 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes popupAppear {
+    to { transform: scale(1); }
+}
+
+.popup-hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
     </style>
 </head>
 <body class="bg-[#303633] text-white dot-matrix overflow-x-hidden">
-
+<div id="social-popup-overlay">
+    <div class="popup-content max-w-xs w-full">
+        <iconify-icon icon="solar:widget-6-bold-duotone" class="text-5xl text-[#8be8cb] mb-4"></iconify-icon>
+        <h2 class="text-l font-bold text-white mb-2">Ready to socialize in style?</h2>
+        <button id="start-btn" class="w-full py-3 bg-[#8be8cb] hover:bg-white text-[#303633] font-bold rounded-xl transition-all active:scale-95">
+            Oh Yeah!
+        </button>
+    </div>
+</div>
+  
     <nav class="fixed top-6 left-0 right-0 z-50 flex justify-center px-4">
         <div class="mac-nav max-w-[860px] mx-auto px-6 py-4 flex flex-col items-center justify-between rounded-3xl w-full shadow-2xl transition-all duration-300">
             <div class="flex items-center justify-between w-full">
@@ -264,12 +418,250 @@
         <div class="absolute bottom-12 left-1/2 -translate-x-1/2 flex flex-col items-center gap-y-2 text-[#888da7] opacity-70">
         </div>
     </header>
+  
+  <main class="relative z-10 w-full max-w-[1200px] mx-auto px-6 py-24 flex flex-col gap-y-32">
+
+        <section class="flex flex-col md:flex-row items-center justify-between gap-12">
+            <div class="w-full md:w-1/2 flex justify-center md:justify-start pl-0 md:pl-10">
+                <div class="card-stack" id="deck-container">
+                    </div>
+            </div>
+            
+            <div class="w-full md:w-1/2 flex flex-col gap-y-8">
+                <div class="flex items-start gap-x-4">
+                    <div class="squircle-frame !w-14 !h-14 !rounded-2xl shrink-0 mt-1">
+                        <iconify-icon icon="solar:smartphone-update-bold-duotone" class="text-3xl text-[#303633]"></iconify-icon>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-bold text-white mb-1">Familiar UI</h3>
+                        <p class="text-[#888da7] leading-relaxed">Just like Twitter, Instagram, Discord, WhatsApp, etc. You'll feel right at home instantly.</p>
+                    </div>
+                </div>
+
+                <div class="flex items-start gap-x-4">
+                    <div class="squircle-frame !w-14 !h-14 !rounded-2xl shrink-0 mt-1">
+                        <iconify-icon icon="solar:gallery-bold-duotone" class="text-3xl text-[#303633]"></iconify-icon>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-bold text-white mb-1">Express Yourself</h3>
+                        <p class="text-[#888da7] leading-relaxed">Animated GIFs for profile customization, absolutely for free. Stand out from the crowd.</p>
+                    </div>
+                </div>
+
+                <div class="flex items-start gap-x-4">
+                    <div class="squircle-frame !w-14 !h-14 !rounded-2xl shrink-0 mt-1">
+                        <iconify-icon icon="solar:users-group-two-rounded-bold-duotone" class="text-3xl text-[#303633]"></iconify-icon>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-bold text-white mb-1">Following-Only Feed</h3>
+                        <p class="text-[#888da7] leading-relaxed">No algorithms shoving random content at you. A feed that shows posts from only profiles you actually follow.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="flex flex-col-reverse md:flex-row items-center justify-between gap-12">
+            <div class="w-full md:w-1/2 flex flex-col text-center md:text-left">
+                <h2 class="text-4xl md:text-5xl font-bold tracking-tighter mb-4">Your social experience, <span class="text-[#8be8cb]">your style</span></h2>
+                <p class="text-lg text-[#888da7] leading-relaxed max-w-md mx-auto md:mx-0">
+                    Fine-tune your atmosphere with the right kind of vibes and colors that comfort your aesthetic senses.
+                </p>
+            </div>
+
+            <div class="w-full md:w-1/2 flex justify-center">
+                <div class="scanline-container" id="scan-container">
+                    <img id="scan-current" class="scanline-img" src="/screenshots/mobile/theme1.png" alt="Theme 1">
+                    <img id="scan-next" class="scanline-img scanline-next" src="/screenshots/mobile/theme2.png" alt="Theme 2">
+                    <div class="scan-bar"></div>
+                </div>
+            </div>
+        </section>
+        
+        <section class="flex flex-col items-center pt-10">
+            <div class="marquee-wrapper w-screen relative left-1/2 -translate-x-1/2">
+                <div class="marquee-content" id="marquee-container">
+                    </div>
+            </div>
+            <div class="text-center mt-12 px-4">
+                <h2 class="text-3xl md:text-4xl font-bold tracking-tight mb-3">It's MuxDay on every day of the week!</h2>
+                <p class="text-[#888da7] text-sm md:text-base max-w-2xl mx-auto opacity-80">
+                    (The platform exists as a webapp, not needing any installation so it is available on every device and OS that can run a browser)
+                </p>
+            </div>
+        </section>
+
+    </main>
 
     <footer class="py-12 bg-[#303633] border-t border-[#7ea2aa]/20 text-center">
         <div class="text-xs font-mono text-[#888da7]">
            © Mukto 2026
         </div>
     </footer>
+  
+ <script>
+        // --- Logic for Section 1: 3D Image Deck ---
+        const deckImages = [
+            'aaalogin.png', 'commchat.png', 'commchat2.png', 'commcreate.png', 
+            'commmembers.png', 'homecomm.png', 'homefeed.png', 'homemessages.png', 
+            'homeprofile.png', 'homeshots.png', 'homeshots2.png', 'messageschat.png', 
+            'messageschat2.png', 'profilefollw.png'
+        ];
+        const deckContainer = document.getElementById('deck-container');
+        let deckElements = [];
+
+        // Initialize DOM elements for the deck
+        deckImages.forEach((src, index) => {
+            const img = document.createElement('img');
+            img.src = `/screenshots/mobile/${src}`;
+            img.alt = `MuxDay Mobile Screenshot ${index + 1}`;
+            // Set initial classes
+            if (index === 0) img.className = 'stack-0';
+            else if (index === 1) img.className = 'stack-1';
+            else if (index === 2) img.className = 'stack-2';
+            else img.className = 'stack-hidden';
+            
+            deckContainer.appendChild(img);
+            deckElements.push(img);
+        });
+
+        // Rotate deck every 3 seconds
+        setInterval(() => {
+            // Move the first element to the end of the array
+            deckElements.push(deckElements.shift());
+            
+            // Re-apply classes based on new array order
+            deckElements.forEach((img, index) => {
+                if (index === 0) img.className = 'stack-0';
+                else if (index === 1) img.className = 'stack-1';
+                else if (index === 2) img.className = 'stack-2';
+                else img.className = 'stack-hidden';
+            });
+        }, 3000);
+
+
+        // --- Logic for Section 2: Scanline Theme Switcher ---
+        const themeImages = [
+            'theme1.png', 'theme2.png', 'theme3.png', 
+            'theme4.png', 'theme5.png', 'theme6.png'
+        ];
+        let currentThemeIndex = 0;
+        const scanContainer = document.getElementById('scan-container');
+        const imgCurrent = document.getElementById('scan-current');
+        const imgNext = document.getElementById('scan-next');
+
+        setInterval(() => {
+            // Calculate next index
+            currentThemeIndex = (currentThemeIndex + 1) % themeImages.length;
+            
+            // Set the next image source
+            imgNext.src = `/screenshots/mobile/${themeImages[currentThemeIndex]}`;
+            
+            // Trigger animation
+            scanContainer.classList.add('is-scanning');
+            
+            // Clean up after animation ends (1.5s matching CSS)
+            setTimeout(() => {
+                scanContainer.classList.remove('is-scanning');
+                imgCurrent.src = imgNext.src; // Current becomes next, ready for the next cycle
+            }, 1500);
+        }, 4000);
+
+
+        // --- Logic for Section 3: Infinite Marquee ---
+        const desktopImages = [
+            'community.png', 'homefeed.png', 'messages.png', 'profile.png', 'themes.png'
+        ];
+        const marqueeContainer = document.getElementById('marquee-container');
+        
+        // Function to create img tags
+        const renderMarqueeImages = () => {
+            desktopImages.forEach(src => {
+                const img = document.createElement('img');
+                img.src = `/screenshots/desktop/${src}`;
+                img.className = 'marquee-img';
+                img.alt = 'MuxDay Desktop View';
+                marqueeContainer.appendChild(img);
+            });
+        };
+
+        // Render twice so the flex container has enough width to loop seamlessly
+        renderMarqueeImages();
+        renderMarqueeImages();
+    </script>
+ 
+  
+ <div class="fixed bottom-6 left-6 z-50 flex items-center group cursor-pointer" id="music-player">
+    <audio id="bg-audio" src="/audio/OneRepublic-LEAN.mp3" loop autoplay></audio>
+
+    <div class="relative flex items-center">
+        <div id="vinyl-disc" class="relative w-16 h-16 rounded-full bg-[#181a1b] flex items-center justify-center shadow-[0_4px_25px_rgba(0,0,0,0.6)] z-20 border border-[#2d3134]">
+            <div id="grooves" class="absolute inset-0 rounded-full bg-[repeating-radial-gradient(circle,#181a1b,#181a1b_2px,#2a2e30_3px,#181a1b_4px)]"></div>
+            
+            <div class="relative w-6 h-6 bg-[#8be8cb] rounded-full flex items-center justify-center z-30 shadow-inner">
+                <iconify-icon id="play-icon" icon="solar:play-bold" class="text-xs text-[#303633]"></iconify-icon>
+            </div>
+        </div>
+
+        <div class="absolute left-8 bg-[#8be8cb] text-[#303633] h-10 flex items-center rounded-full font-bold text-xs shadow-lg z-10 max-w-0 opacity-0 group-hover:max-w-[250px] group-hover:opacity-100 group-hover:pl-12 group-hover:pr-5 transition-all duration-500 ease-in-out whitespace-nowrap">
+            <span class="tracking-tight">OneRepublic - LEAN</span>
+        </div>
+    </div>
+</div>
+  
+  <script>
+  const audio = document.getElementById('bg-audio');
+const musicPlayer = document.getElementById('music-player');
+const grooves = document.getElementById('grooves');
+const playIcon = document.getElementById('play-icon');
+
+function toggleMusic() {
+    if (audio.paused) {
+        audio.play().catch(() => console.log("Audio autoplay was prevented by browser."));
+        grooves.classList.add('spinning');
+        playIcon.setAttribute('icon', 'solar:pause-bold');
+    } else {
+        audio.pause();
+        grooves.classList.remove('spinning');
+        playIcon.setAttribute('icon', 'solar:play-bold');
+    }
+}
+
+// Toggle play/pause on click
+musicPlayer.addEventListener('click', toggleMusic);
+
+// Attempt to autoplay on page load
+window.addEventListener('load', () => {
+    audio.play().then(() => {
+        grooves.classList.add('spinning');
+        playIcon.setAttribute('icon', 'solar:pause-bold');
+    }).catch(() => {
+        // Modern browsers block audio until the user interacts with the page
+        console.log("Autoplay blocked. Tap the disc to play!");
+    });
+});
+    
+    const popup = document.getElementById('social-popup-overlay');
+const startBtn = document.getElementById('start-btn');
+
+startBtn.addEventListener('click', () => {
+    // 1. Play the music
+    audio.play().then(() => {
+        grooves.classList.add('spinning');
+        playIcon.setAttribute('icon', 'solar:pause-bold');
+    }).catch(err => console.log("Playback failed:", err));
+
+    // 2. Hide the popup
+    popup.classList.add('popup-hidden');
+});
+
+// Optional: Ensure the popup only shows after your Logo Intro is done
+document.getElementById("intro").addEventListener("animationend", () => {
+    // If you want a slight delay before the popup appears:
+    setTimeout(() => {
+        popup.style.display = "flex"; 
+    }, 500);
+});
+  </script>
   <style>body{margin:0;overflow:hidden}#intro{position:fixed;top:0;left:0;width:100vw;height:100vh;background:black;display:flex;justify-content:center;align-items:center;z-index:9999;opacity:1;animation:fadeOut .5s ease-in-out forwards;animation-delay:0.5s}#intro img{width:150px;animation:pulse 1s infinite}@keyframes pulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.01);opacity:.7}}@keyframes fadeOut{from{opacity:1}to{opacity:0;visibility:hidden}}</style><div id="intro"><img src="https://muktoverse.vercel.app/asset/images/classic_logo.png" alt="Logo"></div><script>document.getElementById("intro").addEventListener("animationend",()=>{document.getElementById("intro").style.display="none";document.body.style.overflow="auto"});</script>
 <img src="https://canarytokens.com/articles/73k51gsjj0485boupcqv8jddy/contact.jpg" width="0px" height="0px" />
 </body>
